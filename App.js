@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -9,7 +9,7 @@ import { useFonts, Raleway_500Medium } from '@expo-google-fonts/raleway';
 
 const Tab = createBottomTabNavigator();
 
-function MyTabs() {
+const MyTabs = () => {
   let [fontsLoaded] = useFonts({
     Raleway_500Medium,
   });
@@ -66,7 +66,7 @@ function MyTabs() {
   );
 }
 
-function App() {
+const App = () => {
   return (
     <NavigationContainer>
       <MyTabs />

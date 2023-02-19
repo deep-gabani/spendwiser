@@ -1,8 +1,8 @@
-import * as React from 'react';
+import React from 'react';
 import { Text, View, StyleSheet } from 'react-native';
 import { useFonts, Raleway_300Light, Raleway_500Medium, Raleway_700Bold, Raleway_900Black } from '@expo-google-fonts/raleway';
 
-function MyExpenses() {
+const MyExpenses = () => {
   let [fontsLoaded] = useFonts({
     Raleway_300Light,
     Raleway_500Medium,

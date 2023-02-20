@@ -4,10 +4,13 @@ import { useFonts, Raleway_300Light, Raleway_500Medium, Raleway_700Bold, Raleway
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system';
 
 
 const windowWidth = Dimensions.get('window').width;
 const categories = ['Choose a Photo', 'Scan', 'Add Manually'];
+const BASE_URL = 'https://better-rats-attack-49-248-197-218.loca.lt';
+const PROCESS_GALLERY_IMAGE = 'process_gallery_image';
 
 const Header = () => {
   return (
@@ -46,7 +49,7 @@ const ChooseAPhoto = ({ image, setImage }) => {
     });
 
     if (!result.canceled) {
-      setImage(result.assets[0].uri);
+      setImage(result.assets[0]);
     }
   };
 
@@ -58,7 +61,7 @@ const ChooseAPhoto = ({ image, setImage }) => {
     <View>
       {image ?
         <View>
-          <Image source={{ uri: image }} style={styles.chosenImage} resizeMode="contain" />
+          <Image source={{ uri: image.uri }} style={styles.chosenImage} resizeMode="contain" />
           <TouchableOpacity style={styles.closeImageButton} onPress={clearImage}>
             <MaterialCommunityIcons name="close" color={'#0F172A'} size={32} />
           </TouchableOpacity>
@@ -82,7 +85,7 @@ const Scan = ({ scannedImage, setScannedImage }) => {
     });
   
     if (!result.canceled) {
-      setScannedImage(result.assets[0].uri);
+      setScannedImage(result.assets[0]);
     }
   };
 
@@ -94,7 +97,7 @@ const Scan = ({ scannedImage, setScannedImage }) => {
     <View>
       {scannedImage ?
         <View>
-          <Image source={{ uri: scannedImage }} style={styles.chosenImage} resizeMode="contain" />
+          <Image source={{ uri: scannedImage.uri }} style={styles.chosenImage} resizeMode="contain" />
           <TouchableOpacity style={styles.closeImageButton} onPress={clearImage}>
             <MaterialCommunityIcons name="close" color={'#0F172A'} size={32} />
           </TouchableOpacity>
@@ -118,10 +121,20 @@ const SubmitExpense = ({ submitExpense }) => {
 }
 
 
+const ExtractedData = ({ extractedData }) => {
+  return (
+    <View style={styles.extractedData}>
+      <Text>{JSON.stringify(extractedData)}</Text>
+    </View>
+  );
+}
+
+
 const MyExpenses = () => {
   const [category, setCategory] = useState(categories[0]);
   const [image, setImage] = useState(null);
   const [scannedImage, setScannedImage] = useState(null);
+  const [extractedData, setExtractedData] = useState(null);
 
   let [fontsLoaded] = useFonts({
     Raleway_300Light,
@@ -134,8 +147,28 @@ const MyExpenses = () => {
     return null;
   }
 
-  const submitExpense = () => {
+  const submitExpense = async () => {
+    const imageUriParts = image.uri.split('/');
+    const image_name = imageUriParts[imageUriParts.length - 1];
+    const base64Image = await FileSystem.readAsStringAsync(image.uri, { encoding: 'base64' });
 
+    try {
+      const apiUrl = `${BASE_URL}/${PROCESS_GALLERY_IMAGE}`;
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          base64_image: base64Image,
+          image_name: image_name,
+        }),
+      });
+      const data = await response.json();
+      setExtractedData(data);
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   return (
@@ -146,6 +179,7 @@ const MyExpenses = () => {
         {category == categories[0] && <ChooseAPhoto image={image} setImage={setImage} />}
         {category == categories[1] && <Scan scannedImage={scannedImage} setScannedImage={setScannedImage} />}
         <SubmitExpense submitExpense={submitExpense} />
+        {extractedData !== null && <ExtractedData extractedData={extractedData} />}
       </ScrollView>
     </SafeAreaView>
   );

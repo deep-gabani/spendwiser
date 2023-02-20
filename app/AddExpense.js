@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Text, View, StyleSheet, TouchableOpacity, Dimensions, Image, ScrollView } from 'react-native';
+import { Text, View, StyleSheet, TouchableOpacity, Dimensions, Image, ScrollView, ActivityIndicator } from 'react-native';
 import { useFonts, Raleway_300Light, Raleway_500Medium, Raleway_700Bold, Raleway_900Black } from '@expo-google-fonts/raleway';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -9,8 +9,9 @@ import * as FileSystem from 'expo-file-system';
 
 const windowWidth = Dimensions.get('window').width;
 const categories = ['Choose a Photo', 'Scan', 'Add Manually'];
-const BASE_URL = 'https://better-rats-attack-49-248-197-218.loca.lt';
+const BASE_URL = 'https://sweet-bananas-chew-117-97-188-187.loca.lt';
 const PROCESS_GALLERY_IMAGE = 'process_gallery_image';
+
 
 const Header = () => {
   return (
@@ -122,11 +123,31 @@ const SubmitExpense = ({ submitExpense }) => {
 
 
 const ExtractedData = ({ extractedData }) => {
+  const { text } = extractedData;
+
   return (
     <View style={styles.extractedData}>
-      <Text>{JSON.stringify(extractedData)}</Text>
+      <Text>{text}</Text>
     </View>
   );
+}
+
+
+const GetImageNameBase64 = async (image) => {
+  const imageUriParts = image.uri.split('/');
+  const imageName = imageUriParts[imageUriParts.length - 1];
+  const base64Image = await FileSystem.readAsStringAsync(image.uri, { encoding: 'base64' });
+  return {
+    imageName: imageName,
+    base64Image: base64Image
+  }
+}
+
+
+const ExtractedDataBuffering = () => {
+  return (
+    <ActivityIndicator size="large" color="#0F172A" style={styles.extractedDataBuffering} />
+  )
 }
 
 
@@ -135,6 +156,7 @@ const MyExpenses = () => {
   const [image, setImage] = useState(null);
   const [scannedImage, setScannedImage] = useState(null);
   const [extractedData, setExtractedData] = useState(null);
+  const [extractedDataBuffering, setExtractedDataBuffering] = useState(false);
 
   let [fontsLoaded] = useFonts({
     Raleway_300Light,
@@ -148,9 +170,15 @@ const MyExpenses = () => {
   }
 
   const submitExpense = async () => {
-    const imageUriParts = image.uri.split('/');
-    const image_name = imageUriParts[imageUriParts.length - 1];
-    const base64Image = await FileSystem.readAsStringAsync(image.uri, { encoding: 'base64' });
+    setExtractedData(null);
+    setExtractedDataBuffering(true);
+    const _image = category === categories[0] ? image : scannedImage;
+    if (!_image) {
+      setExtractedDataBuffering(false);
+      return;
+    }
+
+    const { imageName, base64Image } = await GetImageNameBase64(_image);
 
     try {
       const apiUrl = `${BASE_URL}/${PROCESS_GALLERY_IMAGE}`;
@@ -160,11 +188,12 @@ const MyExpenses = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          base64_image: base64Image,
-          image_name: image_name,
+          'base64_image': base64Image,
+          'image_name': imageName,
         }),
       });
       const data = await response.json();
+      setExtractedDataBuffering(false);
       setExtractedData(data);
     } catch (error) {
       console.error(error);
@@ -178,7 +207,15 @@ const MyExpenses = () => {
         <CategorySelector category={category} setCategory={setCategory} />
         {category == categories[0] && <ChooseAPhoto image={image} setImage={setImage} />}
         {category == categories[1] && <Scan scannedImage={scannedImage} setScannedImage={setScannedImage} />}
-        <SubmitExpense submitExpense={submitExpense} />
+        {!extractedDataBuffering ?
+          <SubmitExpense
+            submitExpense={submitExpense}
+            extractedData={extractedData}
+            setExtractedData={setExtractedData}
+          />
+        :
+          <ExtractedDataBuffering />
+        }
         {extractedData !== null && <ExtractedData extractedData={extractedData} />}
       </ScrollView>
     </SafeAreaView>
@@ -254,6 +291,9 @@ const styles = StyleSheet.create({
   submitExpenseButtonText: {
     color: '#0F172A',
     fontFamily: 'Raleway_700Bold',
+  },
+  extractedDataBuffering: {
+    height: 56,
   }
 });
 

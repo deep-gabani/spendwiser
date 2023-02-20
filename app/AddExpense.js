@@ -41,7 +41,7 @@ const CategorySelector = ({ category, setCategory }) => {
 }
 
 
-const ChooseAPhoto = ({ image, setImage }) => {
+const ChooseAPhoto = ({ image, setImage, clearImage }) => {
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -54,16 +54,12 @@ const ChooseAPhoto = ({ image, setImage }) => {
     }
   };
 
-  const clearImage = () => {
-    setImage(null);
-  }
-
   return (
     <View>
       {image ?
         <View>
           <Image source={{ uri: image.uri }} style={styles.chosenImage} resizeMode="contain" />
-          <TouchableOpacity style={styles.closeImageButton} onPress={clearImage}>
+          <TouchableOpacity style={styles.closeImageButton} onPress={() => clearImage(setImage)}>
             <MaterialCommunityIcons name="close" color={'#0F172A'} size={32} />
           </TouchableOpacity>
         </View>
@@ -77,7 +73,7 @@ const ChooseAPhoto = ({ image, setImage }) => {
 }
 
 
-const Scan = ({ scannedImage, setScannedImage }) => {
+const Scan = ({ scannedImage, setScannedImage, clearImage }) => {
   const takeImage = async () => {
     let result = await ImagePicker.launchCameraAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -90,16 +86,12 @@ const Scan = ({ scannedImage, setScannedImage }) => {
     }
   };
 
-  const clearImage = () => {
-    setScannedImage(null);
-  }
-
   return (
     <View>
       {scannedImage ?
         <View>
           <Image source={{ uri: scannedImage.uri }} style={styles.chosenImage} resizeMode="contain" />
-          <TouchableOpacity style={styles.closeImageButton} onPress={clearImage}>
+          <TouchableOpacity style={styles.closeImageButton} onPress={() => clearImage(setScannedImage)}>
             <MaterialCommunityIcons name="close" color={'#0F172A'} size={32} />
           </TouchableOpacity>
         </View>
@@ -200,13 +192,18 @@ const MyExpenses = () => {
     }
   }
 
+  const clearImage = ( setImageNull ) => {
+    setImageNull(null);
+    setExtractedData(null);
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <Header />
       <ScrollView>
         <CategorySelector category={category} setCategory={setCategory} />
-        {category == categories[0] && <ChooseAPhoto image={image} setImage={setImage} />}
-        {category == categories[1] && <Scan scannedImage={scannedImage} setScannedImage={setScannedImage} />}
+        {category == categories[0] && <ChooseAPhoto image={image} setImage={setImage} clearImage={clearImage} />}
+        {category == categories[1] && <Scan scannedImage={scannedImage} setScannedImage={setScannedImage} clearImage={clearImage} />}
         {!extractedDataBuffering ?
           <SubmitExpense
             submitExpense={submitExpense}

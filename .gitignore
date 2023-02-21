@@ -1,2 +1,5 @@
-.expo
-node_modules
+app/.expo
+app/node_modules
+
+server/images
+server/tmp

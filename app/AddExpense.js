@@ -9,8 +9,8 @@ import * as FileSystem from 'expo-file-system';
 
 const windowWidth = Dimensions.get('window').width;
 const categories = ['Choose a Photo', 'Scan', 'Add Manually'];
-const BASE_URL = 'https://sweet-bananas-chew-117-97-188-187.loca.lt';
-const PROCESS_GALLERY_IMAGE = 'process_gallery_image';
+const BASE_URL = 'https://angry-candies-hammer-49-248-197-218.loca.lt';
+const SCREENSHOT_IMAGE_ENDPOINT = 'screenshot';
 
 
 const Header = () => {
@@ -173,7 +173,7 @@ const MyExpenses = () => {
     const { imageName, base64Image } = await GetImageNameBase64(_image);
 
     try {
-      const apiUrl = `${BASE_URL}/${PROCESS_GALLERY_IMAGE}`;
+      const apiUrl = `${BASE_URL}/${SCREENSHOT_IMAGE_ENDPOINT}`;
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {

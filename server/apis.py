@@ -1,6 +1,7 @@
 import base64
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from flask_swagger_ui import get_swaggerui_blueprint
 import json
 import os
 import pytesseract
@@ -10,6 +11,20 @@ import typing as t
 
 app = Flask(__name__)
 CORS(app)
+
+
+### swagger specific ###
+SWAGGER_URL = '/api'
+API_URL = '/static/swagger.yaml'
+SWAGGERUI_BLUEPRINT = get_swaggerui_blueprint(
+    SWAGGER_URL,
+    API_URL,
+    config={
+        'app_name': "Spendwiser APIs"
+    }
+)
+app.register_blueprint(SWAGGERUI_BLUEPRINT, url_prefix=SWAGGER_URL)
+### end swagger specific ###
 
 
 def write_image(base64_image: str, image_name: str) -> str:
@@ -39,7 +54,7 @@ def extract_text(image_path: str) -> str:
     return text
 
 
-@app.route('/process_gallery_image', methods=['POST'])
+@app.route('/screenshot', methods=['POST'])
 def process_image():
     """Processes a gallery image."""
     # Get the image data from the request.

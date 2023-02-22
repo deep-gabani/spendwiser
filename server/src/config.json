@@ -1,0 +1,10 @@
+{
+    "log_level": 30,
+    "server_port": 5000,
+    "swagger": {
+        "url": "/api",
+        "yaml_path": "/static/swagger.yaml",
+        "app_name": "Spendwiser APIs"
+    },
+    "fake": true
+}

@@ -40,7 +40,7 @@ gnome-terminal \
     -c "
         $ACTIVATE_CONDA_ENV && \
         cd server && \
-        python3 apis.py \
+        python3 main.py \
         ; bash
     "
 

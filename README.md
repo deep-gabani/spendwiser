@@ -21,7 +21,7 @@ To start the server run the following commands:
 ```bash
 cd server
 pip install -r requirements.txt
-python3 apis.py
+python3 main.py
 ```
 The server also starts a Swagger UI at [http://localhost:5000/api](http://localhost:5000/api) which provides a nice interface & documentation for the APIs and also lets one call & play around with APIs.
 

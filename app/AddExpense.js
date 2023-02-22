@@ -9,7 +9,7 @@ import * as FileSystem from 'expo-file-system';
 
 const windowWidth = Dimensions.get('window').width;
 const categories = ['Choose a Photo', 'Scan', 'Add Manually'];
-const BASE_URL = 'https://angry-candies-hammer-49-248-197-218.loca.lt';
+const BASE_URL = 'http://7ccd-223-235-173-105.ngrok.io';
 const SCREENSHOT_IMAGE_ENDPOINT = 'screenshot';
 
 
@@ -115,11 +115,10 @@ const SubmitExpense = ({ submitExpense }) => {
 
 
 const ExtractedData = ({ extractedData }) => {
-  const { text } = extractedData;
 
   return (
     <View style={styles.extractedData}>
-      <Text>{text}</Text>
+      <Text>{JSON.stringify(extractedData)}</Text>
     </View>
   );
 }

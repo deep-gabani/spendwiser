@@ -4,27 +4,15 @@ from flask_cors import CORS
 from flask_swagger_ui import get_swaggerui_blueprint
 import json
 import os
+from pyngrok import ngrok
 import pytesseract
 from PIL import Image
 import typing as t
 
 
 app = Flask(__name__)
-CORS(app)
-
-
-### swagger specific ###
-SWAGGER_URL = '/api'
-API_URL = '/static/swagger.yaml'
-SWAGGERUI_BLUEPRINT = get_swaggerui_blueprint(
-    SWAGGER_URL,
-    API_URL,
-    config={
-        'app_name': "Spendwiser APIs"
-    }
-)
-app.register_blueprint(SWAGGERUI_BLUEPRINT, url_prefix=SWAGGER_URL)
-### end swagger specific ###
+url = ngrok.connect(5000).public_url
+print(' * Tunnel URL:', url)
 
 
 def write_image(base64_image: str, image_name: str) -> str:
@@ -79,4 +67,19 @@ def process_image():
 
 
 if __name__ == '__main__':
+    CORS(app)
+
+    ### swagger specific ###
+    SWAGGER_URL = '/api'
+    API_URL = '/static/swagger.yaml'
+    SWAGGERUI_BLUEPRINT = get_swaggerui_blueprint(
+        SWAGGER_URL,
+        API_URL,
+        config={
+            'app_name': "Spendwiser APIs"
+        }
+    )
+    app.register_blueprint(SWAGGERUI_BLUEPRINT, url_prefix=SWAGGER_URL)
+    ### end swagger specific ###
+
     app.run(debug=True)

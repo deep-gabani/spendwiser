@@ -20,7 +20,7 @@ class Configure(metaclass=Singleton):
         self.log = logging.getLogger(__name__)
 
         try:
-            with open('static/config.json', 'r') as config_file:
+            with open('src/settings/config.json', 'r') as config_file:
                 self.config = json.load(config_file)
                 logging.basicConfig(level=self.config.get('log_level'), format='(%(levelname)s) [%(asctime)s] %(filename)s:%(lineno)d -> %(message)s')
                 self.log.debug(f'Config: {self.config}')

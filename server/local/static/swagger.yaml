@@ -1,0 +1,515 @@
+openapi: 3.0.0
+info:
+  title: SpendWiser
+  description: SpendWiser APIs
+  version: 1.0.0
+  contact:
+    email: deepgabani8699@gmail.com
+paths:
+  /process-expense-image:
+    post:
+      tags:
+        - Extract Expense Data
+      description: Extract expense data from a bill process-expense-image.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              s3_image_path:
+                type: string
+                description: |
+                  Expense image's location in S3 (URI).
+
+                  **Example**
+                  ```
+                  "s3://process-expense-image-files/7207db42-1ee2-4100-a1d2-b60f10bee046.jpeg"
+                  ```
+              example: {
+                  "s3_image_path": "s3://process-expense-image-files/7207db42-1ee2-4100-a1d2-b60f10bee046.jpeg"
+                }
+      produces: [
+        "application/json"
+      ]
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/components/schemas/expense'
+        '500':
+          description: Bad Request
+descriptions:
+  datetime:
+    type: string
+    description: |
+      DateTime string in YYYY-MM-DDTHH:mm:SSZ format.
+
+      **Example**
+      ```
+      "2023-02-21T15:21:00Z"
+      ```
+  shop:
+    type: object
+    description: |
+      Shop details from where the expense occurred.
+
+      **Example**
+        ```
+        {
+          "name": "BIG BASKET",
+          "address": "XPress Mart, IRIS Shop No - 2 & 3 - 134/3, Baner, Pune - 411015.",
+          "contact_no": "+919521039236"
+        }
+        ```
+    properties:
+      name:
+        type: string
+        description: |
+          Shop / App name, that the application supports.
+          It must be from the exhaustive list below.
+
+          **Example**
+          ```
+          "BIG BASKET"
+          ```
+
+          **Exhaustive List**
+          ```
+          - "BIG BASKET"
+          - "DUNZO"
+          - "SWIGGY"
+          - "ZOMATO"
+          - "ZEPTO"
+          - "BLINKIT"
+          - "JIO MART"
+          - "EATSURE"
+          - "MACDONALDS"
+          - "BURGER KING"
+          - "DOMINOS"
+          - "BIG BAZAR"
+          - "D MART"
+          ```
+      address:
+        type: string
+        description: |
+          Address of the shop. Provide an empty string ("") if not found.
+
+          **Example**
+          ```
+          "XPress Mart, IRIS Shop No - 2 & 3 - 134/3, Baner, Pune - 411015."
+          ```
+      contact_no:
+        type: string
+        description: |
+          Contact no. of the shop. Provide an empty string ("") if not found.
+
+          **Example**
+          ```
+          "+919521039236"
+          ```
+      
+  expense_type:
+    type: string
+    description: |
+      Type of the expense. It must be from the  below.
+
+      **Example**
+      ```
+      "GROCERY"
+      ```
+
+      **Exhaustive List**
+      ```
+      - "GROCERY"
+      - "FOOD"
+      - "ENTERTAINMENT"
+      - "UTILITY"
+      - "TRAVEL"
+      - "REPAYMENT"
+      - "OTHER"
+      ```
+  bill_amount:
+    type: object
+    description: |
+      Bill amount related details.
+
+      **Example**
+      ```
+      {
+        "item_total": 284.00,
+        "tax": 44.04,
+        "delivery": 0.00,
+        "discount": 120.00,
+        "paid": 208.00
+      }
+      ```
+    properties:
+      item_total:
+        type: number
+        format: float
+        description: |
+          Total amount of the items.
+
+          **Example**
+          ```
+          284.00
+          ```
+      tax:
+        type: number
+        format: float
+        description: |
+          Tax amount on the expense.
+
+          **Example**
+          ```
+          44.04
+          ```
+      delivery:
+        type: number
+        format: float
+        description: |
+          Delivery charge on the expense.
+          Provide 0.0 if not found.
+
+          **Example**
+          ```
+          0.00
+          ```
+      discount:
+        type: number
+        format: float
+        description: |
+          Discount amount on the expense.
+
+          **Example**
+          ```
+          120.00
+          ```
+      paid:
+        type: number
+        format: float
+        description: |
+          Total amount paid after adding tax and subtracting discount on the expense.
+
+          **Example**
+          ```
+          208.00
+          ```
+  item:
+    type: object
+    description: |
+      A single expense item's details.
+
+      **Example**
+      ```
+      {
+        "name": "Cabbage",
+        "occurrence": 1,
+        "quantity": {
+          "value": 1,
+          "unit": "PIECE"
+        },
+        "tax": {
+          "value": 12.00,
+          "unit": "PERCENT"
+        },
+        "price": 12.00
+      }
+      ```
+    properties:
+      name:
+        type: string
+        description: |
+          The product item's name.
+
+          **Example**
+          ```
+          "Cabbage"
+          ```
+      occurrence:
+        type: number
+        format: integer
+        description: |
+          The number of time this item is purchased.
+
+          **Example**
+          ```
+          1
+          ```
+      quantity:
+        type: object
+        description: |
+          The product item's quantity details.
+
+          **Example**
+          ```
+          {
+            "value": 1,
+            "unit": "PIECE"
+          }
+          ```
+        properties:
+          value:
+            type: number
+            format: integer
+            description: |
+              The quantity value of the product item.
+
+              **Example**
+              ```
+              1
+              ```
+          unit:
+            type: string
+            description: |
+              The unit of the quantity value.
+              It must be from the exhaustive list below.
+
+              **Example**
+              ```
+              "PIECE"
+              ```
+
+              **Exhaustive List**
+              ```
+              - "PIECE"
+              - "GRAM"
+              - "KILOGRAM"
+              - "LITER"
+              - "MILLILITER"
+              ```
+      tax:
+        type: object
+        description: |
+          The product item's tax details.
+
+          **Example**
+          ```
+          {
+            "value": 12.00,
+            "unit": "PERCENT"
+          }
+          ```
+        properties:
+          value:
+            type: number
+            format: float
+            description: |
+              The tax value of the product item.
+              Provide 0 if not found.
+
+              **Example**
+              ```
+              12
+              ```
+          unit:
+            type: string
+            description: |
+              The unit of the tax value.
+              It must be from the exhaustive list below.
+              Provide "PERCENT" if tax value is not found.
+
+              **Example**
+              ```
+              "PERCENT"
+              ```
+
+              **Exhaustive List**
+              ```
+              - "PERCENT"
+              - "CURRENCY"
+              ```
+      price:
+        type: number
+        format: float
+        description: |
+          The price of the product item.
+
+          **Example**
+          ```
+          12
+          ```
+  items:
+    type: array
+    items:
+      $ref: '#/descriptions/item'
+    description: |
+      Items from the expense bill.
+
+      **Example**
+      ```
+      [
+        {
+          "name": "Cabbage",
+          "occurrence": 1,
+          "quantity": {
+            "value": 1,
+            "unit": "PIECE"
+          },
+          "tax": {
+            "value": 12.00,
+            "unit": "PERCENT"
+          },
+          "price": 12.00
+        },
+        {
+          "name": "Bottle Gourd",
+          "occurance": 2,
+          "quantity": {
+            "value": 1,
+            "unit": "PIECE"
+          },
+          "tax": {
+            "value": 12.00,
+            "unit": "PERCENT"
+          },
+          "price": 26.50
+        },
+        {
+          "name": "Gemini Refined Groundnut Oil",
+          "occurance": 1,
+          "quantity": {
+            "value": 1,
+            "unit": "LITER"
+          },
+          "tax": {
+            "value": 18.00,
+            "unit": "PERCENT"
+          },
+          "price": 219.00
+        }
+      ]
+      ```
+  delivery:
+    type: object
+    description: |
+      Delivery details of the expense.
+
+      **Example**
+      ```
+      {
+        "address": "D-802, Relicon alpine ridge, Baner, Pune - 411015.",
+        "address_tag": "HOME"
+      }
+      ```
+    properties:
+      address:
+        type: string
+        description: |
+          Delivery address.
+          Provide an empty string ("") if not found.
+
+          **Example**
+          ```
+          "D-802, Relicon alpine ridge, Baner, Pune - 411015."
+          ```
+      address_tag:
+        type: string
+        description: |
+          Tag of the delivery address.
+          Provide "UNKNOWN" if not found.
+          It must be from the exhaustive list below.
+
+          **Example**
+          ```
+          "HOME"
+          ```
+
+          **Exhaustive List**
+          ```
+          - "HOME"
+          - "OFFICE"
+          - "UNKNOWN"
+          ```
+
+components:
+  schemas:
+    expense:
+      type: object
+      description: |
+        Expense details.
+
+        **Example**
+        ```
+        {
+          "datetime": "2023-02-21T15:21:00Z",
+          "shop": {
+            "name": "BIG BASKET",
+            "address": "XPress Mart, IRIS Shop No - 2 & 3 - 134/3, Baner, Pune - 411015.",
+            "contact_no": "+919521039236"
+          },
+          "expense_type": "GROCERY",
+          "bill_amount": {
+            "item_total": 284.00,
+            "tax": 44.04,
+            "delivery": 0.00,
+            "discount": 120.00,
+            "paid": 208.00
+          },
+          "items": [
+            {
+              "name": "Cabbage",
+              "occurrence": 1,
+              "quantity": {
+                "value": 1,
+                "unit": "PIECE"
+              },
+              "tax": {
+                "value": 12.00,
+                "unit": "PERCENT"
+              },
+              "price": 12.00
+            },
+            {
+              "name": "Bottle Gourd",
+              "occurance": 2,
+              "quantity": {
+                "value": 1,
+                "unit": "PIECE"
+              },
+              "tax": {
+                "value": 12.00,
+                "unit": "PERCENT"
+              },
+              "price": 26.50
+            },
+            {
+              "name": "Gemini Refined Groundnut Oil",
+              "occurance": 1,
+              "quantity": {
+                "value": 1,
+                "unit": "LITER"
+              },
+              "tax": {
+                "value": 18.00,
+                "unit": "PERCENT"
+              },
+              "price": 219.00
+            }
+          ],
+          "delivery": {
+            "address": "D-802, Relicon alpine ridge, Baner, Pune - 411015.",
+            "address_tag": "HOME"
+          }
+        }
+        ```
+      properties:
+        datetime:
+          $ref: '#/descriptions/datetime'
+        shop:
+          $ref: '#/descriptions/shop'
+        expense_type:
+          $ref: '#/descriptions/expense_type'
+        bill_amount:
+          $ref: '#/descriptions/bill_amount'
+        items:
+          $ref: '#/descriptions/items'
+        delivery:
+          $ref: '#/descriptions/delivery'
+
+
+servers:
+  - url: http://localhost:5000/
+tags:
+  - name: Extract Expense Data
+    description: Extract expense data from bills.

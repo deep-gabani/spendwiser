@@ -5,12 +5,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
+import * as apis from './apis.js';
 
 
 const windowWidth = Dimensions.get('window').width;
 const categories = ['Choose a Photo', 'Scan', 'Add Manually'];
-const BASE_URL = 'http://7ccd-223-235-173-105.ngrok.io';
-const SCREENSHOT_IMAGE_ENDPOINT = 'screenshot';
 
 
 const Header = () => {
@@ -45,7 +44,7 @@ const ChooseAPhoto = ({ image, setImage, clearImage }) => {
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
+      allowsEditing: false,
       quality: 1,
     });
 
@@ -172,18 +171,7 @@ const MyExpenses = () => {
     const { imageName, base64Image } = await GetImageNameBase64(_image);
 
     try {
-      const apiUrl = `${BASE_URL}/${SCREENSHOT_IMAGE_ENDPOINT}`;
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          'base64_image': base64Image,
-          'image_name': imageName,
-        }),
-      });
-      const data = await response.json();
+      const data = await apis.submitExpenseImage(imageName, base64Image);
       setExtractedDataBuffering(false);
       setExtractedData(data);
     } catch (error) {
@@ -194,6 +182,7 @@ const MyExpenses = () => {
   const clearImage = ( setImageNull ) => {
     setImageNull(null);
     setExtractedData(null);
+    setExtractedDataBuffering(false);
   }
 
   return (

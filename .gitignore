@@ -4,3 +4,4 @@ app/node_modules
 server/tmp
 server/__pycache__
 server/src/__pycache__
+server/local/__pycache__

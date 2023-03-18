@@ -16,20 +16,18 @@ url = ngrok.connect(config['server_port']).public_url
 log.critical(f'Tunnel URL: {url}')
 
 
-@app.route('/screenshot', methods=['POST'])
+@app.route('/process-expense-image', methods=['POST'])
 def process_image():
     """Processes a gallery image."""
     # Get the image data from the request.
     # request_data = {
-    #   'base64_image': 'b/9j/....',
-    #   'image_name': 'dunzo_screenshot.jpeg'
+    #   's3_image_path': 's3://process-expense-image-files/7207db42-1ee2-4100-a1d2-b60f10bee046.jpeg',
     # }
     request_data = json.loads(request.get_data(as_text=True))
-    base64_image = request_data['base64_image']
-    image_name = request_data['image_name']
+    s3_image_path = request_data['s3_image_path']
     
     # Convert the image to response.
-    response = compute_response(base64_image, image_name)
+    response = compute_response(s3_image_path)
 
     return jsonify(response)
 

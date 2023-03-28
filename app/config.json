@@ -1,5 +1,7 @@
 {
-    "apiBaseUrl": "http://477f-42-106-13-82.ngrok.io",
+    "apiBaseUrl": "https://pxyy3d65zh.execute-api.ap-south-1.amazonaws.com",
+    "awsApiStageName": "dev",
+    "awsRegion": "ap-south-1",
     "maxResults": 10
 }
   

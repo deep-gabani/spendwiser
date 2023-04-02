@@ -3,14 +3,12 @@ import { Text, View, StyleSheet, TouchableOpacity, Dimensions, ScrollView } from
 import { useFonts, Raleway_300Light, Raleway_500Medium, Raleway_700Bold, Raleway_900Black } from '@expo-google-fonts/raleway';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, Zocial } from '@expo/vector-icons';
-import { getState, setState, setToast } from './store';
+import { getState, setState, SharedContext } from './store';
 import { validatePhoneNumber, validateEmail } from './utils';
 import * as apis from './apis.js';
-import { ToastContext } from './components/Toast';
 
 import Button from './components/Button';
 import TextBox from './components/TextBox';
-import Buffering from './components/Buffering';
 
 
 const windowWidth = Dimensions.get('window').width;
@@ -26,15 +24,14 @@ const Header = ({ title }) => {
 
 
 const OtpScreen = ({ phone_number, otp, set_otp, otp_sent, sendOtp, uponOtpVerification }) => {
-  const [showBuffering, setShowBuffering] = useState(false);
-  const setToast = useContext(ToastContext);
+  const { setToast, setBuffering } = useContext(SharedContext);
 
   const verifyOtp = async () => {
     if (otp === otp_sent) {
       // OTP validation succeeded...
-      setShowBuffering(true);
+      setBuffering(true);
       await uponOtpVerification();
-      setShowBuffering(false);
+      setBuffering(false);
     } else {
       setToast({ text: 'Incorrect OTP! Try again.', severity: 'FAILURE' });
       return;
@@ -44,7 +41,6 @@ const OtpScreen = ({ phone_number, otp, set_otp, otp_sent, sendOtp, uponOtpVerif
   return (
     <ScrollView>
       <View style={loginStyles.container}>
-        <Buffering visible={showBuffering} />
 
         <TextBox
           label={`Enter your OTP from ${phone_number}`}
@@ -68,6 +64,7 @@ const OtpScreen = ({ phone_number, otp, set_otp, otp_sent, sendOtp, uponOtpVerif
             </TouchableOpacity>
           </View>
         </View>
+
       </View>
     </ScrollView>
   );
@@ -82,8 +79,7 @@ const Signup = ({ refreshScreen, setShowSignupScreen }) => {
   const [otp, set_otp] = useState('');
   const [otp_sent, set_otp_sent] = useState('');
   const [show_otp_screen, set_show_otp_screen] = useState(false);
-  const [showBuffering, setShowBuffering] = useState(false);
-  const setToast = useContext(ToastContext);
+  const { setToast, setBuffering } = useContext(SharedContext);
 
   const sendOtp = async () => {
     const response = await apis.sendOtp({ phone_number: `+91${phone_number}`});
@@ -97,34 +93,34 @@ const Signup = ({ refreshScreen, setShowSignupScreen }) => {
   const handleSignup = async () => {
     // Checking for first name...
     if (!first_name) {
-      setToast({ text: 'Please enter your first name!', severity: 'FAILURE' });
+      setToast({ text: 'Please enter your first name!', severity: 'WARNING' });
       return;
     }
 
     // Checking for last name...
     if (!last_name) {
-      setToast({ text: 'Please enter your last name!', severity: 'FAILURE' });
+      setToast({ text: 'Please enter your last name!', severity: 'WARNING' });
       return;
     }
 
     // Validating the phone number...
     if (!validatePhoneNumber(phone_number)) {
-      setToast({ text: 'Please enter a valid phone number!', severity: 'FAILURE' });
+      setToast({ text: 'Please enter a valid phone number!', severity: 'WARNING' });
       return;
     }
 
     // Validating email...
     if (!validateEmail(email)) {
-      setToast({ text: 'Please enter a valid email!', severity: 'FAILURE' });
+      setToast({ text: 'Please enter a valid email!', severity: 'WARNING' });
       return;
     }
 
 
     // Sending OTP...
-    setShowBuffering(true);
+    setBuffering(true);
     await sendOtp();
     set_show_otp_screen(true);
-    setShowBuffering(false);
+    setBuffering(false);
   };
 
   
@@ -159,7 +155,6 @@ const Signup = ({ refreshScreen, setShowSignupScreen }) => {
   return (
     <>
       <Header title="Signup" />
-      <Buffering visible={showBuffering} />
       <ScrollView>
         <View style={loginStyles.container}>
           <View style={loginStyles.userNameView}>
@@ -246,8 +241,7 @@ const Login = ({ refreshScreen, setShowSignupScreen }) => {
   const [otp, set_otp] = useState('');
   const [otp_sent, set_otp_sent] = useState('');
   const [show_otp_screen, set_show_otp_screen] = useState(false);
-  const [showBuffering, setShowBuffering] = useState(false);
-  const setToast = useContext(ToastContext);
+  const { setToast, setBuffering } = useContext(SharedContext);
 
   const sendOtp = async () => {
     const response = await apis.sendOtp({ phone_number: `+91${phone_number}`});
@@ -260,15 +254,15 @@ const Login = ({ refreshScreen, setShowSignupScreen }) => {
 
   const handleLogin = async () => {
     if (!validatePhoneNumber(phone_number)) {
-      setToast({ text: 'Please enter a valid phone number', severity: 'FAILURE' });
+      setToast({ text: 'Please enter a valid phone number!', severity: 'WARNING' });
       return;
     }
 
     // Sending OTP...
-    setShowBuffering(true);
+    setBuffering(true);
     await sendOtp();
     set_show_otp_screen(true);
-    setShowBuffering(false);
+    setBuffering(false);
   };
 
   
@@ -301,7 +295,6 @@ const Login = ({ refreshScreen, setShowSignupScreen }) => {
   return (
     <>
       <Header title="Login" />
-      <Buffering visible={showBuffering} />
       <ScrollView>
         
         <View style={loginStyles.container}>

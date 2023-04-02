@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { Text, View, StyleSheet, TouchableOpacity, Dimensions, Image, ScrollView } from 'react-native';
 import { useFonts, Raleway_300Light, Raleway_500Medium, Raleway_700Bold, Raleway_900Black } from '@expo-google-fonts/raleway';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -7,7 +7,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as apis from './apis.js';
 import { S3 } from 'aws-sdk';
 import { awsAccessKey, awsSecretKey, awsS3BucketForExpenseImages } from './config';
-import { getState } from './store';
+import { getState, SharedContext } from './store';
 
 import Button from './components/Button';
 import Buffering from './components/Buffering';
@@ -111,16 +111,6 @@ const Scan = ({ scannedImage, setScannedImage, clearImage }) => {
 }
 
 
-const ExtractedData = ({ extractedData }) => {
-
-  return (
-    <View style={styles.extractedData}>
-      <Text>{JSON.stringify(extractedData)}</Text>
-    </View>
-  );
-}
-
-
 const uploadImageToS3 = async (image) => {
   const { uri } = image;
   const fileName = uri.split('/').pop();
@@ -149,8 +139,7 @@ const AddExpense = () => {
   const [category, setCategory] = useState(categories[0]);
   const [image, setImage] = useState(null);
   const [scannedImage, setScannedImage] = useState(null);
-  const [extractedData, setExtractedData] = useState(null);
-  const [showBuffering, setShowBuffering] = useState(false);
+  const { setToast, setBuffering } = useContext(SharedContext);
 
   let [fontsLoaded] = useFonts({
     Raleway_300Light,
@@ -164,27 +153,30 @@ const AddExpense = () => {
   }
 
   const submitExpense = async () => {
-    setExtractedData(null);
     const _image = category === categories[0] ? image : scannedImage;
     if (!_image) {
+      setToast({ text: "No image provided", severity: 'WARNING' });
       return;
     }
 
     try {
-      setShowBuffering(true);
+      setBuffering(true);
       const s3_image_uri = await uploadImageToS3(_image);
-      const data = await apis.submitExpenseImage({ s3_image_uri });
-      setExtractedData(data);
+      const response = await apis.submitExpenseImage({ s3_image_uri });
+      if ( response["statusCode"] === 200) {
+        const { message, expense_id } = response["body"];
+        setToast({ text: message, severity: 'SUCCESS' });
+        clearImage();
+      }
     } catch (e) {
-      setExtractedData('Failed to extract expense data from the image. Try again!');
+      setToast({ text: 'Failed to start extraction from the image. Try again!', severity: 'FAILURE' });
     } finally {
-      setShowBuffering(false)
+      setBuffering(false)
     }
   }
 
-  const clearImage = ( setImageNull ) => {
-    setImageNull(null);
-    setExtractedData(null);
+  const clearImage = () => {
+    setImage(null);
   }
 
   return (
@@ -199,8 +191,6 @@ const AddExpense = () => {
             text="Submit"
             onPress={submitExpense}
           />
-          <Buffering visible={showBuffering} />
-          {extractedData !== null && <ExtractedData extractedData={extractedData} />}
         </View>
       </ScrollView>
     </SafeAreaView>

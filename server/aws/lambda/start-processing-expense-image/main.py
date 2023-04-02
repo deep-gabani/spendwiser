@@ -86,6 +86,6 @@ def lambda_handler(event, context):
         'body': {
             'expense_id': expense_id,
             'uploaded_time': uploaded_time,
-            'message': 'Expense extraction is started.'
+            'message': f'Expense extraction is started.\nYour expense id is {expense_id}.'
         }
     }

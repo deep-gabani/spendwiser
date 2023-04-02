@@ -1,3 +1,6 @@
+import { createContext } from 'react';
+
+
 const state = {
     user: {},
 }
@@ -17,7 +20,11 @@ const setState = (updatedStatePortion) => {
 }
 
 
+const SharedContext = createContext();
+
+
 export {
     getState,
     setState,
+    SharedContext
 }

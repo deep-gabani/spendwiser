@@ -5,13 +5,13 @@ import MyExpenses from './MyExpenses';
 import AddExpense from './AddExpense';
 import MyProfile from './MyProfile';
 import { useFonts, Raleway_500Medium } from '@expo-google-fonts/raleway';
-import { ToastContext } from './components/Toast';
+import { SharedContext } from './store';
 
 
 const Tab = createBottomTabNavigator();
 
 
-const Tabs = ({ setToast }) => {
+const Tabs = ({ setToast, setBuffering }) => {
 
   let [fontsLoaded] = useFonts({
     Raleway_500Medium,
@@ -22,7 +22,7 @@ const Tabs = ({ setToast }) => {
   }
 
   return (
-    <ToastContext.Provider value={setToast}>
+    <SharedContext.Provider value={{ setToast: setToast, setBuffering: setBuffering }}>
       <Tab.Navigator
         initialRouteName="My Expenses"
         screenOptions={{
@@ -67,12 +67,12 @@ const Tabs = ({ setToast }) => {
           }}
         />
       </Tab.Navigator>
-    </ ToastContext.Provider>
+    </ SharedContext.Provider>
   );
 }
 
 
 export {
     Tabs,
-    ToastContext,
+    SharedContext,
 };

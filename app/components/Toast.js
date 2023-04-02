@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, createContext } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Text, StyleSheet, Animated, PanResponder } from 'react-native';
 import { useFonts, Raleway_300Light, Raleway_500Medium, Raleway_700Bold, Raleway_900Black } from '@expo-google-fonts/raleway';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,9 +16,6 @@ const severityToIconMapping = {
   'WARNING': <Ionicons name="ios-warning-outline" color={'#0F172A'} size={32} />,
   'FAILURE': <Ionicons name="close-circle-outline" color={'#0F172A'} size={32} />,
 }
-
-
-const ToastContext = createContext();
 
 
 const Toast = ({ toast, setToast }) => {
@@ -121,7 +118,4 @@ const styles = StyleSheet.create({
 });
 
 
-export {
-  Toast,
-  ToastContext
-};
+export default Toast;

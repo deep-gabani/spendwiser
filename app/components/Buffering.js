@@ -3,7 +3,7 @@ import { View, StyleSheet, Text, ActivityIndicator, Modal } from 'react-native';
 import { useFonts, Raleway_300Light, Raleway_500Medium, Raleway_700Bold, Raleway_900Black } from '@expo-google-fonts/raleway';
 
 
-const Buffering = ({ visible }) => {
+const Buffering = () => {
 
   let [fontsLoaded] = useFonts({
     Raleway_300Light,
@@ -17,7 +17,7 @@ const Buffering = ({ visible }) => {
   }
 
   return (
-    <Modal presentationStyle="overFullScreen" animationType='fade' visible={visible} transparent={true}>
+    <Modal presentationStyle="overFullScreen" animationType='fade' visible={true} transparent={true}>
       <View style={styles.bufferingView}>
         <ActivityIndicator size="large" color="#0F172A" />
         <Text style={styles.text}>Loading...</Text>
@@ -34,7 +34,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: -96,
-    backgroundColor: 'rgba(0, 0, 0, 0.25)',
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
   },
   text: {
     padding: 8,

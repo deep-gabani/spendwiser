@@ -150,7 +150,7 @@ const AddExpense = () => {
   const [image, setImage] = useState(null);
   const [scannedImage, setScannedImage] = useState(null);
   const [extractedData, setExtractedData] = useState(null);
-  const [extractedDataBuffering, setExtractedDataBuffering] = useState(false);
+  const [showBuffering, setShowBuffering] = useState(false);
 
   let [fontsLoaded] = useFonts({
     Raleway_300Light,
@@ -165,28 +165,26 @@ const AddExpense = () => {
 
   const submitExpense = async () => {
     setExtractedData(null);
-    setExtractedDataBuffering(true);
     const _image = category === categories[0] ? image : scannedImage;
     if (!_image) {
-      setExtractedDataBuffering(false);
       return;
     }
 
     try {
+      setShowBuffering(true);
       const s3_image_uri = await uploadImageToS3(_image);
       const data = await apis.submitExpenseImage({ s3_image_uri });
-      setExtractedDataBuffering(false);
       setExtractedData(data);
     } catch (e) {
-      setExtractedDataBuffering(false);
       setExtractedData('Failed to extract expense data from the image. Try again!');
+    } finally {
+      setShowBuffering(false)
     }
   }
 
   const clearImage = ( setImageNull ) => {
     setImageNull(null);
     setExtractedData(null);
-    setExtractedDataBuffering(false);
   }
 
   return (
@@ -201,7 +199,7 @@ const AddExpense = () => {
             text="Submit"
             onPress={submitExpense}
           />
-          <Buffering visible={extractedDataBuffering} />
+          <Buffering visible={showBuffering} />
           {extractedData !== null && <ExtractedData extractedData={extractedData} />}
         </View>
       </ScrollView>
@@ -253,9 +251,6 @@ const styles = StyleSheet.create({
     top: 2,
     right: 2,
   },
-  extractedDataBuffering: {
-    height: 56,
-  }
 });
 
 

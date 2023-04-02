@@ -17,11 +17,11 @@ const Buffering = ({ visible }) => {
   }
 
   return (
-    <Modal presentationStyle="fullScreen" visible={visible}>
-        <View style={styles.bufferingView}>
-            <ActivityIndicator size="large" color="#0F172A" />
-            <Text style={styles.text}>Loading...</Text>
-        </View>
+    <Modal presentationStyle="overFullScreen" animationType='fade' visible={visible} transparent={true}>
+      <View style={styles.bufferingView}>
+        <ActivityIndicator size="large" color="#0F172A" />
+        <Text style={styles.text}>Loading...</Text>
+      </View>
     </Modal>
   );
 
@@ -29,17 +29,19 @@ const Buffering = ({ visible }) => {
 
 
 const styles = StyleSheet.create({
-    bufferingView: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginTop: -96,
-    },
-    text: {
-        padding: 8,
-        color: '#0F172A',
-        fontFamily: 'Raleway_700Bold',
-    }
+  bufferingView: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: -96,
+    backgroundColor: 'rgba(0, 0, 0, 0.25)',
+  },
+  text: {
+    padding: 8,
+    color: '#0F172A',
+    fontSize: 24,
+    fontFamily: 'Raleway_700Bold',
+  }
 });
 
 

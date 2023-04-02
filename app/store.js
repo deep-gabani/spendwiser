@@ -3,8 +3,12 @@ const state = {
 }
 
 
-const getState = () => {
-    return state;
+const getState = ( key = null ) => {
+    if (!key || !(key in state)) {
+        return state;
+    }
+    
+    return state[key];
 }
 
 

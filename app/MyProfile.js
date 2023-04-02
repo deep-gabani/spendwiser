@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
-import { Text, View, StyleSheet, TouchableOpacity, Dimensions, Image, ScrollView, TextInput, ToastAndroid } from 'react-native';
+import React, { useContext, useState } from 'react';
+import { Text, View, StyleSheet, TouchableOpacity, Dimensions, ScrollView } from 'react-native';
 import { useFonts, Raleway_300Light, Raleway_500Medium, Raleway_700Bold, Raleway_900Black } from '@expo-google-fonts/raleway';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, Zocial } from '@expo/vector-icons';
-import { getState, setState } from './store';
+import { getState, setState, setToast } from './store';
 import { validatePhoneNumber, validateEmail } from './utils';
 import * as apis from './apis.js';
+import { ToastContext } from './components/Toast';
 
 import Button from './components/Button';
 import TextBox from './components/TextBox';
@@ -26,6 +27,7 @@ const Header = ({ title }) => {
 
 const OtpScreen = ({ phone_number, otp, set_otp, otp_sent, sendOtp, uponOtpVerification }) => {
   const [showBuffering, setShowBuffering] = useState(false);
+  const setToast = useContext(ToastContext);
 
   const verifyOtp = async () => {
     if (otp === otp_sent) {
@@ -34,7 +36,7 @@ const OtpScreen = ({ phone_number, otp, set_otp, otp_sent, sendOtp, uponOtpVerif
       await uponOtpVerification();
       setShowBuffering(false);
     } else {
-      ToastAndroid.show('Incorrect OTP! Try again.', ToastAndroid.SHORT);
+      setToast({ text: 'Incorrect OTP! Try again.', severity: 'FAILURE' });
       return;
     }
   }
@@ -81,12 +83,13 @@ const Signup = ({ refreshScreen, setShowSignupScreen }) => {
   const [otp_sent, set_otp_sent] = useState('');
   const [show_otp_screen, set_show_otp_screen] = useState(false);
   const [showBuffering, setShowBuffering] = useState(false);
+  const setToast = useContext(ToastContext);
 
   const sendOtp = async () => {
     const response = await apis.sendOtp({ phone_number: `+91${phone_number}`});
     if ( response["statusCode"] === 200) {
       const { message, messge_id, otp: otp_sent } = response["body"];
-      ToastAndroid.show(message, ToastAndroid.SHORT);
+      setToast({ text: message, severity: 'SUCCESS' });
       set_otp_sent(otp_sent);
     }
   }
@@ -94,25 +97,25 @@ const Signup = ({ refreshScreen, setShowSignupScreen }) => {
   const handleSignup = async () => {
     // Checking for first name...
     if (!first_name) {
-      ToastAndroid.show('Please enter your first name!', ToastAndroid.SHORT);
+      setToast({ text: 'Please enter your first name!', severity: 'FAILURE' });
       return;
     }
 
     // Checking for last name...
     if (!last_name) {
-      ToastAndroid.show('Please enter your last name!', ToastAndroid.SHORT);
+      setToast({ text: 'Please enter your last name!', severity: 'FAILURE' });
       return;
     }
 
     // Validating the phone number...
     if (!validatePhoneNumber(phone_number)) {
-      ToastAndroid.show('Please enter a valid phone number!', ToastAndroid.SHORT);
+      setToast({ text: 'Please enter a valid phone number!', severity: 'FAILURE' });
       return;
     }
 
     // Validating email...
     if (!validateEmail(email)) {
-      ToastAndroid.show('Please enter a valid email!', ToastAndroid.SHORT);
+      setToast({ text: 'Please enter a valid email!', severity: 'FAILURE' });
       return;
     }
 
@@ -128,11 +131,12 @@ const Signup = ({ refreshScreen, setShowSignupScreen }) => {
   const uponOtpVerification = async () => {
     // Signup the user...
     const response = await apis.signup({ first_name: first_name, last_name: last_name, phone_number: `+91${phone_number}`, email: email });
-    ToastAndroid.show(response["body"]["message"], ToastAndroid.SHORT);
     if ( response["statusCode"] === 200 ) {
       setState({ user: response["body"]["user"] });
+      setToast({ text: response["body"]["message"], severity: 'SUCCESS' });
       refreshScreen();
     } else if ( response["statusCode"] === 500 ) {
+      setToast({ text: response["body"]["message"], severity: 'FAILURE' });
       set_show_otp_screen(false);
       set_otp("");
       set_otp_sent("");
@@ -243,19 +247,20 @@ const Login = ({ refreshScreen, setShowSignupScreen }) => {
   const [otp_sent, set_otp_sent] = useState('');
   const [show_otp_screen, set_show_otp_screen] = useState(false);
   const [showBuffering, setShowBuffering] = useState(false);
+  const setToast = useContext(ToastContext);
 
   const sendOtp = async () => {
     const response = await apis.sendOtp({ phone_number: `+91${phone_number}`});
     if ( response["statusCode"] === 200) {
       const { message, messge_id, otp: otp_sent } = response["body"];
-      ToastAndroid.show(message, ToastAndroid.SHORT);
+      setToast({ text: message, severity: 'SUCCESS' });
       set_otp_sent(otp_sent);
     }
   }
 
   const handleLogin = async () => {
     if (!validatePhoneNumber(phone_number)) {
-      ToastAndroid.show('Please enter a valid phone number', ToastAndroid.SHORT);
+      setToast({ text: 'Please enter a valid phone number', severity: 'FAILURE' });
       return;
     }
 
@@ -270,11 +275,12 @@ const Login = ({ refreshScreen, setShowSignupScreen }) => {
   const uponOtpVerification = async () => {
     // Signup the user...
     const response = await apis.login({ phone_number: `+91${phone_number}` });
-    ToastAndroid.show(response["body"]["message"], ToastAndroid.SHORT);
     if ( response["statusCode"] === 200 ) {
+      setToast({ text: response["body"]["message"], severity: 'SUCCESS' });
       setState({ user: response["body"]["user"] });
       refreshScreen();
     } else if ( response["statusCode"] === 500 ) {
+      setToast({ text: response["body"]["message"], severity: 'FAILURE' });
       set_show_otp_screen(false);
       set_otp("");
       set_otp_sent("");

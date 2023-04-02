@@ -7,6 +7,10 @@ import { getState, setState } from './store';
 import { validatePhoneNumber, validateEmail } from './utils';
 import * as apis from './apis.js';
 
+import Button from './components/Button';
+import TextBox from './components/TextBox';
+import Buffering from './components/Buffering';
+
 
 const windowWidth = Dimensions.get('window').width;
 
@@ -21,11 +25,14 @@ const Header = ({ title }) => {
 
 
 const OtpScreen = ({ phone_number, otp, set_otp, otp_sent, sendOtp, uponOtpVerification }) => {
+  const [showBuffering, setShowBuffering] = useState(false);
 
-  const verifyOtp = () => {
+  const verifyOtp = async () => {
     if (otp === otp_sent) {
       // OTP validation succeeded...
-      uponOtpVerification();
+      setShowBuffering(true);
+      await uponOtpVerification();
+      setShowBuffering(false);
     } else {
       ToastAndroid.show('Incorrect OTP! Try again.', ToastAndroid.SHORT);
       return;
@@ -33,29 +40,31 @@ const OtpScreen = ({ phone_number, otp, set_otp, otp_sent, sendOtp, uponOtpVerif
   }
 
   return (
-    <ScrollView style={loginStyles.container}>
-      <View style={loginStyles.otpView}>
-        <Text style={loginStyles.otpLabel}>Enter your OTP from {phone_number}</Text>
-        <TextInput
-          style={loginStyles.otpInput}
+    <ScrollView>
+      <View style={loginStyles.container}>
+        <Buffering visible={showBuffering} />
+
+        <TextBox
+          label={`Enter your OTP from ${phone_number}`}
           placeholder="- - - - - -"
-          onChangeText={set_otp}
+          onChange={set_otp}
           value={otp}
-          keyboardType="numeric"
-          maxLength={6}
+          textInputProps={{ keyboardType: "numeric", maxLength: 6 }}
+          textInputStyle={{ letterSpacing: 8, textAlign: 'center' }}
         />
-      </View>
 
-      <TouchableOpacity style={loginStyles.button} onPress={verifyOtp}>
-        <Text style={loginStyles.buttonText}>Verify</Text>
-      </TouchableOpacity>
+        <Button
+          text="Verify"
+          onPress={verifyOtp}
+        />
 
-      <View style={loginStyles.otpTextView}>
-        <View style={loginStyles.resendOtpView}>
-          <Text style={loginStyles.resendOtpText}>Didn't receive an OTP? </Text>
-          <TouchableOpacity onPress={sendOtp}>
-            <Text style={loginStyles.resendOtpLinkText}>Resend OTP</Text>
-          </TouchableOpacity>
+        <View style={loginStyles.otpTextView}>
+          <View style={loginStyles.resendOtpView}>
+            <Text style={loginStyles.resendOtpText}>Didn't receive an OTP? </Text>
+            <TouchableOpacity onPress={sendOtp}>
+              <Text style={loginStyles.resendOtpLinkText}>Resend OTP</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     </ScrollView>
@@ -71,6 +80,7 @@ const Signup = ({ refreshScreen, setShowSignupScreen }) => {
   const [otp, set_otp] = useState('');
   const [otp_sent, set_otp_sent] = useState('');
   const [show_otp_screen, set_show_otp_screen] = useState(false);
+  const [showBuffering, setShowBuffering] = useState(false);
 
   const sendOtp = async () => {
     const response = await apis.sendOtp({ phone_number: `+91${phone_number}`});
@@ -108,8 +118,10 @@ const Signup = ({ refreshScreen, setShowSignupScreen }) => {
 
 
     // Sending OTP...
+    setShowBuffering(true);
     await sendOtp();
     set_show_otp_screen(true);
+    setShowBuffering(false);
   };
 
   
@@ -143,86 +155,82 @@ const Signup = ({ refreshScreen, setShowSignupScreen }) => {
   return (
     <>
       <Header title="Signup" />
-      <ScrollView style={loginStyles.container}>
-
-        <View style={loginStyles.userNameView}>
-          <View style={loginStyles.userNameChildView}>
-            <Text style={loginStyles.userNameLabel}>First Name</Text>
-            <TextInput
-              style={loginStyles.userNameInput}
+      <Buffering visible={showBuffering} />
+      <ScrollView>
+        <View style={loginStyles.container}>
+          <View style={loginStyles.userNameView}>
+            <TextBox
+              label="First Name"
               placeholder="Deep"
-              onChangeText={set_first_name}
+              onChange={set_first_name}
               value={first_name}
+              textInputStyle={{ borderRightWidth: 0 }}
             />
-          </View>
-          <View style={loginStyles.userNameChildView}>
-            <Text style={loginStyles.userNameLabel}>Last Name</Text>
-            <TextInput
-              style={{...loginStyles.userNameInput, ...loginStyles.last_nameInput}}
+            <TextBox
+              label="Last Name"
               placeholder="Gabani"
-              onChangeText={set_last_name}
+              onChange={set_last_name}
               value={last_name}
             />
           </View>
-        </View>
-        
-        <View style={loginStyles.phoneView}>
-          <Text style={loginStyles.phone_numberLabel}>Phone Number</Text>
-          <View style={loginStyles.phoneInputView}>
-            <Text style={loginStyles.phone_numberCountryCodeLabel}>+91</Text>
-            <TextInput
-              style={loginStyles.phone_numberInput}
-              placeholder="70486 34600"
-              onChangeText={set_phone_number}
-              value={phone_number}
-              keyboardType="phone-pad"
-              maxLength={10}
+
+          <TextBox
+            label="Phone Number"
+            placeholder="70486 34600"
+            onChange={set_phone_number}
+            value={phone_number}
+            textInputProps={{ keyboardType: "phone-pad", maxLength: 10 }}
+            prependTextInputLabel="+91"
+          />
+
+          <TextBox
+            label="Email"
+            placeholder="deepgabani@gmail.com"
+            onChange={set_email}
+            value={email}
+            textInputProps={{ keyboardType: "email-address" }}
+          />
+
+          <Button
+            text="Signup"
+            onPress={handleSignup}
+          />
+
+          <View style={loginStyles.orView}>
+            <View style={loginStyles.orDashedLine} />
+            <Text style={loginStyles.orText}>or</Text>
+            <View style={loginStyles.orDashedLine} />
+          </View>
+
+          <View style={loginStyles.oneClickLoginView}>
+            <Button
+              icon={<Ionicons name="logo-google" size={24} color="#0F172A" />}
+              text="  Signup with Google"
+              onPress={() => {}}
+              buttonStyle={{ opacity: 0.25 }}
             />
+            <Button
+              icon={<Zocial name="facebook" size={24} color="#0F172A" />}
+              text="  Signup with Facebook"
+              onPress={() => {}}
+              buttonStyle={{ opacity: 0.25 }}
+            />
+            <Button
+              icon={<Ionicons name="logo-apple" size={24} color="#0F172A" />}
+              text="  Signup with Apple"
+              onPress={() => {}}
+              buttonStyle={{ opacity: 0.25 }}
+            />
+          </View>
+
+          <View style={loginStyles.signupTextView}>
+            <Text style={loginStyles.signupText}>Already have an account? </Text>
+            <TouchableOpacity onPress={() => setShowSignupScreen(false)}>
+              <Text style={loginStyles.signupLinkText}>Login</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
-        <View style={loginStyles.emailView}>
-          <Text style={loginStyles.emailLabel}>Email</Text>
-          <TextInput
-            style={loginStyles.emailInput}
-            placeholder="deepgabani@gmail.com"
-            onChangeText={set_email}
-            value={email}
-            keyboardType="email-address"
-          />
-        </View>
-
-        <TouchableOpacity style={loginStyles.button} onPress={handleSignup}>
-          <Text style={loginStyles.buttonText}>Signup</Text>
-        </TouchableOpacity>
-
-        <View style={loginStyles.orView}>
-          <View style={loginStyles.orDashedLine} />
-          <Text style={loginStyles.orText}>or</Text>
-          <View style={loginStyles.orDashedLine} />
-        </View>
-
-        <View style={loginStyles.oneClickLoginView}>
-          <TouchableOpacity style={{...loginStyles.button, ...loginStyles.disabled}}onPress={() => {}}>
-            <Ionicons name="logo-google" size={24} color="#0F172A" />
-            <Text style={loginStyles.buttonText}>  Signup with Google</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={{...loginStyles.button, ...loginStyles.disabled}} onPress={() => {}}>
-            <Zocial name="facebook" size={24} color="#0F172A" />
-            <Text style={loginStyles.buttonText}>  Signup with Facebook</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={{...loginStyles.button, ...loginStyles.disabled}} onPress={() => {}}>
-            <Ionicons name="logo-apple" size={24} color="#0F172A" />
-            <Text style={loginStyles.buttonText}>  Signup with Apple</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={loginStyles.signupTextView}>
-          <Text style={loginStyles.signupText}>Already have an account? </Text>
-          <TouchableOpacity onPress={() => setShowSignupScreen(false)}>
-            <Text style={loginStyles.signupLinkText}>Login</Text>
-          </TouchableOpacity>
-        </View>
       </ScrollView>
     </>
   );
@@ -234,12 +242,12 @@ const Login = ({ refreshScreen, setShowSignupScreen }) => {
   const [otp, set_otp] = useState('');
   const [otp_sent, set_otp_sent] = useState('');
   const [show_otp_screen, set_show_otp_screen] = useState(false);
+  const [showBuffering, setShowBuffering] = useState(false);
 
   const sendOtp = async () => {
     const response = await apis.sendOtp({ phone_number: `+91${phone_number}`});
     if ( response["statusCode"] === 200) {
       const { message, messge_id, otp: otp_sent } = response["body"];
-      console.log(response["body"]);
       ToastAndroid.show(message, ToastAndroid.SHORT);
       set_otp_sent(otp_sent);
     }
@@ -251,10 +259,11 @@ const Login = ({ refreshScreen, setShowSignupScreen }) => {
       return;
     }
 
-
     // Sending OTP...
+    setShowBuffering(true);
     await sendOtp();
     set_show_otp_screen(true);
+    setShowBuffering(false);
   };
 
   
@@ -286,52 +295,59 @@ const Login = ({ refreshScreen, setShowSignupScreen }) => {
   return (
     <>
       <Header title="Login" />
-      <ScrollView style={loginStyles.container}>
+      <Buffering visible={showBuffering} />
+      <ScrollView>
         
-        <Text style={loginStyles.phone_numberLabel}>Phone Number</Text>
-        <View style={loginStyles.phoneInputView}>
-          <Text style={loginStyles.phone_numberCountryCodeLabel}>+91</Text>
-          <TextInput
-            style={loginStyles.phone_numberInput}
+        <View style={loginStyles.container}>
+          <TextBox
+            label="Phone Number"
             placeholder="70486 34600"
-            onChangeText={set_phone_number}
+            onChange={set_phone_number}
             value={phone_number}
-            keyboardType="phone-pad"
-            maxLength={10}
+            textInputProps={{ keyboardType: "phone-pad", maxLength: 10 }}
+            prependTextInputLabel="+91"
           />
+
+          <Button
+            text="Login"
+            onPress={handleLogin}
+          />
+
+          <View style={loginStyles.orView}>
+            <View style={loginStyles.orDashedLine} />
+            <Text style={loginStyles.orText}>or</Text>
+            <View style={loginStyles.orDashedLine} />
+          </View>
+
+          <View style={loginStyles.oneClickLoginView}>
+            <Button
+              icon={<Ionicons name="logo-google" size={24} color="#0F172A" />}
+              text="  Login with Google"
+              onPress={() => {}}
+              buttonStyle={{ opacity: 0.25 }}
+            />
+            <Button
+              icon={<Zocial name="facebook" size={24} color="#0F172A" />}
+              text="  Login with Facebook"
+              onPress={() => {}}
+              buttonStyle={{ opacity: 0.25 }}
+            />
+            <Button
+              icon={<Ionicons name="logo-apple" size={24} color="#0F172A" />}
+              text="  Login with Apple"
+              onPress={() => {}}
+              buttonStyle={{ opacity: 0.25 }}
+            />
+          </View>
+
+          <View style={loginStyles.signupTextView}>
+            <Text style={loginStyles.signupText}>Don't have an account? </Text>
+            <TouchableOpacity onPress={setShowSignupScreen}>
+              <Text style={loginStyles.signupLinkText}>Sign up</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
-        <TouchableOpacity style={loginStyles.button} onPress={handleLogin}>
-          <Text style={loginStyles.buttonText}>Login</Text>
-        </TouchableOpacity>
-
-        <View style={loginStyles.orView}>
-          <View style={loginStyles.orDashedLine} />
-          <Text style={loginStyles.orText}>or</Text>
-          <View style={loginStyles.orDashedLine} />
-        </View>
-
-        <View style={loginStyles.oneClickLoginView}>
-          <TouchableOpacity style={{...loginStyles.button, ...loginStyles.disabled}}onPress={() => {}}>
-            <Ionicons name="logo-google" size={24} color="#0F172A" />
-            <Text style={loginStyles.buttonText}>  Login with Google</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={{...loginStyles.button, ...loginStyles.disabled}} onPress={() => {}}>
-            <Zocial name="facebook" size={24} color="#0F172A" />
-            <Text style={loginStyles.buttonText}>  Login with Facebook</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={{...loginStyles.button, ...loginStyles.disabled}} onPress={() => {}}>
-            <Ionicons name="logo-apple" size={24} color="#0F172A" />
-            <Text style={loginStyles.buttonText}>  Login with Apple</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={loginStyles.signupTextView}>
-          <Text style={loginStyles.signupText}>Don't have an account? </Text>
-          <TouchableOpacity onPress={setShowSignupScreen}>
-            <Text style={loginStyles.signupLinkText}>Sign up</Text>
-          </TouchableOpacity>
-        </View>
       </ScrollView>
     </>
   );
@@ -350,16 +366,18 @@ const ProfileView = ({ refreshScreen }) => {
   return (
     <>
       <Header title="My Profile" />
-      <ScrollView style={profileStyles.container} contentContainerStyle={{ flexGrow: 1 }}>
-        <View style={profileStyles.innerContainer}>
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+        <View style={profileStyles.container}>
           <View style={profileStyles.usernameBanner}>
             <Text style={profileStyles.usernameBannerPrefix}>Welcome, </Text>
             <Text style={profileStyles.usernameBannerName}>{first_name}!</Text>
           </View>
 
-          <TouchableOpacity style={profileStyles.logoutButton} onPress={handleLogout}>
-            <Text style={profileStyles.logoutButtonText}>Logout</Text>
-          </TouchableOpacity>
+          <Button
+            text="Logout"
+            onPress={handleLogout}
+            buttonStyle={{ marginBottom: 16 }}
+          />
         </View>
       </ScrollView>
     </>
@@ -426,68 +444,19 @@ const styles = StyleSheet.create({
   headerText: {
     fontFamily: 'Raleway_700Bold',
   },
-  phone_numberInput: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    padding: 16,
-    margin: 8,
-    width: '80%',
-    borderRadius: 4,
-    textAlign: 'center',
-    fontSize: 24,
-  },
 });
 
 
 const loginStyles = StyleSheet.create({
   container: {
     paddingVertical: 8,
-    paddingBottom: 48,
-  },
-  phone_numberLabel: {
-    fontFamily: 'Raleway_300Light'
-  },
-  phoneInputView: {
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'row',
-  },
-  phone_numberCountryCodeLabel: {
-    fontFamily: 'Raleway_300Light',
-    fontSize: 24,
-    paddingVertical: 16,
-    paddingLeft: 16,
-    borderWidth: 1,
-    marginVertical: 4,
-    borderRightWidth: 0
-  },
-  phone_numberInput: {
-    flex: 1,
-    fontSize: 24,
-    padding: 16,
-    borderWidth: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginVertical: 4,
-    fontFamily: 'Raleway_700Bold',
-    borderLeftWidth: 0
-  },
-  button: {
-    padding: 16,
-    borderWidth: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginVertical: 4,
-    flexDirection: 'row',
-  },
-  buttonText: {
-    color: '#0F172A',
-    fontFamily: 'Raleway_700Bold',
+    paddingBottom: 48
   },
   signupTextView: {
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'center',
+    paddingBottom: 8,
   },
   signupText: {
     fontFamily: 'Raleway_300Light',
@@ -499,51 +468,7 @@ const loginStyles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'row',
     flex: 1,
-  },
-  userNameChildView: {
-    flex: 1
-  },
-  userNameLabel: {
-    fontFamily: 'Raleway_300Light'
-  },
-  userNameInput: {
-    fontSize: 24,
-    padding: 16,
-    borderWidth: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginVertical: 4,
-    fontFamily: 'Raleway_700Bold',
-  },
-  last_nameInput: {
-    borderLeftWidth: 0
-  },
-  emailLabel: {
-    fontFamily: 'Raleway_300Light' 
-  },
-  emailInput: {
-    fontSize: 24,
-    padding: 16,
-    borderWidth: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginVertical: 4,
-    fontFamily: 'Raleway_700Bold',
-  },
-  otpLabel: {
-    fontFamily: 'Raleway_300Light'
-  },
-  otpInput: {
-    flex: 1,
-    fontSize: 24,
-    padding: 16,
-    borderWidth: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    textAlign: 'center',
-    letterSpacing: 8,
-    marginVertical: 4,
-    fontFamily: 'Raleway_700Bold',
+    paddingTop: 8,
   },
   otpTextView: {
     display: 'flex',
@@ -563,9 +488,6 @@ const loginStyles = StyleSheet.create({
   },
   resendOtpLinkText: {
     fontFamily: 'Raleway_700Bold',
-  },
-  disabled: {
-    opacity: 0.25
   },
   orView: {
     flex: 1,
@@ -592,10 +514,8 @@ const loginStyles = StyleSheet.create({
 
 const profileStyles = StyleSheet.create({
   container: {
-    paddingVertical: 8,
-  },
-  innerContainer: {
     flex: 1,
+    paddingVertical: 8,
     justifyContent: 'space-between',
   },
   usernameBanner: {
@@ -610,18 +530,6 @@ const profileStyles = StyleSheet.create({
   usernameBannerName: {
     fontFamily: 'Raleway_900Black',
     fontSize: 24,
-  },
-  logoutButton: {
-    padding: 16,
-    borderWidth: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginVertical: 4,
-    marginBottom: 16
-  },
-  logoutButtonText: {
-    color: '#0F172A',
-    fontFamily: 'Raleway_700Bold',
   },
 });
 

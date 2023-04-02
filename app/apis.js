@@ -1,8 +1,10 @@
 import { apiBaseUrl, awsApiStageName } from './config';
+import { getState } from './store';
 
 
-const submitExpenseImage = async ( imageName, base64Image ) => {
-  const url = `${apiBaseUrl}/${awsApiStageName}/process-expense-image`;
+const submitExpenseImage = async ({ s3_image_uri }) => {
+  const url = `${apiBaseUrl}/${awsApiStageName}/start-processing-expense-image`;
+  const { user } = getState();
   try {
     const response = await fetch(url, {
       method: 'POST',
@@ -10,8 +12,8 @@ const submitExpenseImage = async ( imageName, base64Image ) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        'base64_image': base64Image,
-        'image_name': imageName,
+        'phone_number': user['phone_number'],
+        's3_image_uri': s3_image_uri,
       }),
     });
     const data = await response.json();

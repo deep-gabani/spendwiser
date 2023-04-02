@@ -1,5 +1,7 @@
 app/.expo
 app/node_modules
 
-server/images
 server/tmp
+server/__pycache__
+server/src/__pycache__
+server/local/__pycache__

@@ -1,0 +1,9 @@
+{
+    "apiBaseUrl": "https://pxyy3d65zh.execute-api.ap-south-1.amazonaws.com",
+    "awsApiStageName": "dev",
+    "awsAccessKey": "AKIAWGS4PDEBU3EBKZMI",
+    "awsSecretKey": "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",
+    "awsRegion": "ap-south-1",
+    "awsS3BucketForExpenseImages": "process-expense-image-files",
+    "maxResults": 10
+}

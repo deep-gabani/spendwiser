@@ -1,16 +1,24 @@
-import React, { useState } from 'react';
-import { Text, View, StyleSheet, TouchableOpacity, Dimensions, Image, ScrollView, ActivityIndicator } from 'react-native';
+import React, { useContext, useState } from 'react';
+import { Text, View, StyleSheet, TouchableOpacity, Dimensions, Image, ScrollView } from 'react-native';
 import { useFonts, Raleway_300Light, Raleway_500Medium, Raleway_700Bold, Raleway_900Black } from '@expo-google-fonts/raleway';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system';
+import * as apis from './apis.js';
+import { S3 } from 'aws-sdk';
+import { awsAccessKey, awsSecretKey, awsS3BucketForExpenseImages } from './config';
+import { getState, SharedContext } from './store';
+
+import Button from './components/Button';
+import Buffering from './components/Buffering';
 
 
 const windowWidth = Dimensions.get('window').width;
 const categories = ['Choose a Photo', 'Scan', 'Add Manually'];
-const BASE_URL = 'https://angry-candies-hammer-49-248-197-218.loca.lt';
-const SCREENSHOT_IMAGE_ENDPOINT = 'screenshot';
+const s3 = new S3({
+  accessKeyId: awsAccessKey,
+  secretAccessKey: awsSecretKey,
+});
 
 
 const Header = () => {
@@ -26,15 +34,13 @@ const CategorySelector = ({ category, setCategory }) => {
   return (
     <View style={styles.categorySelector}>
       {categories.map(cat => (
-        <TouchableOpacity
-          style={styles.categorySelectorButton}
+        <Button
           key={cat}
+          text={cat}
           onPress={() => setCategory(cat)}
-        >
-          <Text style={{ ...styles.categorySelectorButtonText, fontFamily: category === cat ? 'Raleway_700Bold' : 'Raleway_300Light' }}>
-            {cat}
-          </Text>
-        </TouchableOpacity>
+          buttonStyle={{ flex: 1, padding: 8, borderWidth: 0 }}
+          buttonTextStyle={{ fontFamily: cat === category ? 'Raleway_900Black' : 'Raleway_700Bold' }}
+        />
       ))}
     </View>
   );
@@ -45,7 +51,7 @@ const ChooseAPhoto = ({ image, setImage, clearImage }) => {
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
+      allowsEditing: false,
       quality: 1,
     });
 
@@ -105,50 +111,35 @@ const Scan = ({ scannedImage, setScannedImage, clearImage }) => {
 }
 
 
-const SubmitExpense = ({ submitExpense }) => {
-  return (
-    <TouchableOpacity style={styles.submitExpenseButton} onPress={submitExpense}>
-      <Text style={styles.submitExpenseButtonText}>Submit</Text>
-    </TouchableOpacity>
-  );
+const uploadImageToS3 = async (image) => {
+  const { uri } = image;
+  const fileName = uri.split('/').pop();
+  const extension = fileName.split('.').pop();
+
+  const imageData = await fetch(uri);
+  const blobData = await imageData.blob();
+
+  const { user } = getState();
+  const { phone_number } = user;
+
+  const params = {
+    Bucket: awsS3BucketForExpenseImages,
+    Key: `${phone_number}/${fileName}`,
+    Body: blobData,
+    ContentType: `image/${extension}`,
+  };
+
+  await s3.putObject(params).promise();
+  const s3_image_uri = `s3://${awsS3BucketForExpenseImages}/${phone_number}/${fileName}`
+  return s3_image_uri;
 }
 
 
-const ExtractedData = ({ extractedData }) => {
-  const { text } = extractedData;
-
-  return (
-    <View style={styles.extractedData}>
-      <Text>{text}</Text>
-    </View>
-  );
-}
-
-
-const GetImageNameBase64 = async (image) => {
-  const imageUriParts = image.uri.split('/');
-  const imageName = imageUriParts[imageUriParts.length - 1];
-  const base64Image = await FileSystem.readAsStringAsync(image.uri, { encoding: 'base64' });
-  return {
-    imageName: imageName,
-    base64Image: base64Image
-  }
-}
-
-
-const ExtractedDataBuffering = () => {
-  return (
-    <ActivityIndicator size="large" color="#0F172A" style={styles.extractedDataBuffering} />
-  )
-}
-
-
-const MyExpenses = () => {
+const AddExpense = () => {
   const [category, setCategory] = useState(categories[0]);
   const [image, setImage] = useState(null);
   const [scannedImage, setScannedImage] = useState(null);
-  const [extractedData, setExtractedData] = useState(null);
-  const [extractedDataBuffering, setExtractedDataBuffering] = useState(false);
+  const { setToast, setBuffering } = useContext(SharedContext);
 
   let [fontsLoaded] = useFonts({
     Raleway_300Light,
@@ -162,58 +153,45 @@ const MyExpenses = () => {
   }
 
   const submitExpense = async () => {
-    setExtractedData(null);
-    setExtractedDataBuffering(true);
     const _image = category === categories[0] ? image : scannedImage;
     if (!_image) {
-      setExtractedDataBuffering(false);
+      setToast({ text: "No image provided", severity: 'WARNING' });
       return;
     }
 
-    const { imageName, base64Image } = await GetImageNameBase64(_image);
-
     try {
-      const apiUrl = `${BASE_URL}/${SCREENSHOT_IMAGE_ENDPOINT}`;
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          'base64_image': base64Image,
-          'image_name': imageName,
-        }),
-      });
-      const data = await response.json();
-      setExtractedDataBuffering(false);
-      setExtractedData(data);
-    } catch (error) {
-      console.error(error);
+      setBuffering(true);
+      const s3_image_uri = await uploadImageToS3(_image);
+      const response = await apis.submitExpenseImage({ s3_image_uri });
+      if ( response["statusCode"] === 200) {
+        const { message, expense_id } = response["body"];
+        setToast({ text: message, severity: 'SUCCESS' });
+        clearImage();
+      }
+    } catch (e) {
+      setToast({ text: 'Failed to start extraction from the image. Try again!', severity: 'FAILURE' });
+    } finally {
+      setBuffering(false)
     }
   }
 
-  const clearImage = ( setImageNull ) => {
-    setImageNull(null);
-    setExtractedData(null);
+  const clearImage = () => {
+    setImage(null);
   }
 
   return (
     <SafeAreaView style={styles.container}>
       <Header />
       <ScrollView>
-        <CategorySelector category={category} setCategory={setCategory} />
-        {category == categories[0] && <ChooseAPhoto image={image} setImage={setImage} clearImage={clearImage} />}
-        {category == categories[1] && <Scan scannedImage={scannedImage} setScannedImage={setScannedImage} clearImage={clearImage} />}
-        {!extractedDataBuffering ?
-          <SubmitExpense
-            submitExpense={submitExpense}
-            extractedData={extractedData}
-            setExtractedData={setExtractedData}
+        <View>
+          <CategorySelector category={category} setCategory={setCategory} />
+          {category == categories[0] && <ChooseAPhoto image={image} setImage={setImage} clearImage={clearImage} />}
+          {category == categories[1] && <Scan scannedImage={scannedImage} setScannedImage={setScannedImage} clearImage={clearImage} />}
+          <Button
+            text="Submit"
+            onPress={submitExpense}
           />
-        :
-          <ExtractedDataBuffering />
-        }
-        {extractedData !== null && <ExtractedData extractedData={extractedData} />}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -222,6 +200,7 @@ const MyExpenses = () => {
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     paddingVertical: 8,
     paddingHorizontal: 16,
     paddingBottom: 48
@@ -240,16 +219,6 @@ const styles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'row',
   },
-  categorySelectorButton: {
-    padding: 8,
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  categorySelectorButtonText: {
-    color: '#0F172A',
-    fontFamily: 'Raleway_300Light',
-  },
   chooseAPhotoButton: {
     width: windowWidth - 32,
     height: windowWidth - 32,
@@ -267,32 +236,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  updateImageOptions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginVertical: 4
-  },
   closeImageButton: {
     position: 'absolute',
     top: 2,
     right: 2,
-    backgroundColor: '#CBD5E1'
   },
-  submitExpenseButton: {
-    padding: 16,
-    borderWidth: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginVertical: 4
-  },
-  submitExpenseButtonText: {
-    color: '#0F172A',
-    fontFamily: 'Raleway_700Bold',
-  },
-  extractedDataBuffering: {
-    height: 56,
-  }
 });
 
 
-export default MyExpenses;
+export default AddExpense;

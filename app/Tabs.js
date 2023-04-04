@@ -1,17 +1,20 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import MyExpenses from './MyExpenses';
 import AddExpense from './AddExpense';
 import MyProfile from './MyProfile';
 import { useFonts, Raleway_500Medium } from '@expo-google-fonts/raleway';
-import { SharedContext } from './store';
+import { userLoggedIn, SharedContext } from './store';
+import { useNavigation } from '@react-navigation/native';
 
 
 const Tab = createBottomTabNavigator();
 
 
 const Tabs = ({ setToast, setBuffering }) => {
+  const navigation = useNavigation();
+  const initialRouteName = userLoggedIn() ? 'My Expenses' : 'My Profile';
 
   let [fontsLoaded] = useFonts({
     Raleway_500Medium,
@@ -22,9 +25,9 @@ const Tabs = ({ setToast, setBuffering }) => {
   }
 
   return (
-    <SharedContext.Provider value={{ setToast: setToast, setBuffering: setBuffering }}>
+    <SharedContext.Provider value={{ setToast: setToast, setBuffering: setBuffering, navigation: navigation }}>
       <Tab.Navigator
-        initialRouteName="My Expenses"
+        initialRouteName={initialRouteName}
         screenOptions={{
           tabBarActiveTintColor: '#0F172A',
           tabBarItemStyle: {

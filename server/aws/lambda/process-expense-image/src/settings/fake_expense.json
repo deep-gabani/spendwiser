@@ -29,7 +29,7 @@
     },
     {
       "name": "Bottle Gourd",
-      "occurance": 2,
+      "occurrence": 2,
       "quantity": {
         "value": 1,
         "unit": "PIECE"
@@ -42,7 +42,7 @@
     },
     {
       "name": "Gemini Refined Groundnut Oil",
-      "occurance": 1,
+      "occurrence": 1,
       "quantity": {
         "value": 1,
         "unit": "LITER"

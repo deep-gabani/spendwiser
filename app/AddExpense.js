@@ -182,7 +182,7 @@ const AddExpense = () => {
     <SafeAreaView style={styles.container}>
       <Header />
       <ScrollView>
-        <View>
+        <View style={styles.innerContainer}>
           <CategorySelector category={category} setCategory={setCategory} />
           {category == categories[0] && <ChooseAPhoto image={image} setImage={setImage} clearImage={clearImage} />}
           {category == categories[1] && <Scan scannedImage={scannedImage} setScannedImage={setScannedImage} clearImage={clearImage} />}
@@ -200,19 +200,22 @@ const AddExpense = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    paddingBottom: 48
   },
   header: {
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingBottom: 16,
-    borderBottomWidth: 1
+    borderBottomWidth: 1,
+    paddingVertical: 8,
+    marginHorizontal: 16,
   },
   headerText: {
     fontFamily: 'Raleway_700Bold',
+  },
+  innerContainer: {
+    flex: 1,
+    paddingBottom: 48,
+    paddingHorizontal: 16,
   },
   categorySelector: {
     display: 'flex',

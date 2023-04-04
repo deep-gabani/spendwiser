@@ -241,7 +241,7 @@ const Login = ({ refreshScreen, setShowSignupScreen }) => {
   const [otp, set_otp] = useState('');
   const [otp_sent, set_otp_sent] = useState('');
   const [show_otp_screen, set_show_otp_screen] = useState(false);
-  const { setToast, setBuffering } = useContext(SharedContext);
+  const { setToast, setBuffering, navigation } = useContext(SharedContext);
 
   const sendOtp = async () => {
     const response = await apis.sendOtp({ phone_number: `+91${phone_number}`});
@@ -273,6 +273,7 @@ const Login = ({ refreshScreen, setShowSignupScreen }) => {
       setToast({ text: response["body"]["message"], severity: 'SUCCESS' });
       setState({ user: response["body"]["user"] });
       refreshScreen();
+      navigation.navigate('My Expenses');
     } else if ( response["statusCode"] === 500 ) {
       setToast({ text: response["body"]["message"], severity: 'FAILURE' });
       set_show_otp_screen(false);
@@ -430,15 +431,14 @@ const MyProfile = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
   },
   header: {
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingBottom: 16,
-    borderBottomWidth: 1
+    borderBottomWidth: 1,
+    paddingVertical: 8,
+    marginHorizontal: 16,
   },
   headerText: {
     fontFamily: 'Raleway_700Bold',
@@ -449,7 +449,8 @@ const styles = StyleSheet.create({
 const loginStyles = StyleSheet.create({
   container: {
     paddingVertical: 8,
-    paddingBottom: 48
+    paddingBottom: 48,
+    paddingHorizontal: 16,
   },
   signupTextView: {
     display: 'flex',
@@ -515,6 +516,7 @@ const profileStyles = StyleSheet.create({
   container: {
     flex: 1,
     paddingVertical: 8,
+    paddingHorizontal: 16,
     justifyContent: 'space-between',
   },
   usernameBanner: {

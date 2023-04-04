@@ -13,8 +13,12 @@ const validateEmail = (email) => {
 }
 
 
-const parseDateTime = (datetime) => {
-    return moment(datetime).format('Do MMMM, YYYY HH:mm');
+const parseDateTime = ( datetime, format = 'Do MMMM, YYYY HH:mm', len = -1 ) => {
+    const dateString = moment(datetime).format(format);
+    if (len === -1) {
+        return dateString;
+    }
+    return dateString.substring(0, len);
 }
 
 
@@ -23,6 +27,14 @@ const capitalizeString = (string) => {
     const capitalizedWords = words.map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase());
     return capitalizedWords.join(" ");
 }
+
+const beautifyMobileNo = (phone_no) => {
+    const country_code = phone_no.substring(0, 3);
+    const first_five_digits = phone_no.substring(3, 8);
+    const last_five_digits = phone_no.substring(8);
+
+    return `${country_code} ${first_five_digits}-${last_five_digits}`
+}
   
 
 export {
@@ -30,4 +42,5 @@ export {
     validateEmail,
     parseDateTime,
     capitalizeString,
+    beautifyMobileNo,
 };

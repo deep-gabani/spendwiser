@@ -23,8 +23,14 @@ const setState = (updatedStatePortion) => {
 const SharedContext = createContext();
 
 
+const userLoggedIn = () => {
+    return Object.keys(getState('user')).length !== 0;
+}
+
+
 export {
     getState,
     setState,
-    SharedContext
+    SharedContext,
+    userLoggedIn,
 }

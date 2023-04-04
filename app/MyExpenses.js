@@ -1,11 +1,11 @@
 import React, { useContext, useState, useEffect } from 'react';
-import { Text, View, Image, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { Text, View, Image, StyleSheet, ScrollView, ActivityIndicator, Modal, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFonts, Raleway_300Light, Raleway_500Medium, Raleway_700Bold, Raleway_900Black } from '@expo-google-fonts/raleway';
-import { Ionicons } from '@expo/vector-icons';
-import { getState, SharedContext } from './store';
+import { Ionicons, AntDesign, MaterialCommunityIcons, FontAwesome } from '@expo/vector-icons';
+import { getState, setState, SharedContext, userLoggedIn } from './store';
 import * as apis from './apis.js';
-import { parseDateTime, capitalizeString } from './utils';
+import { parseDateTime, capitalizeString, beautifyMobileNo } from './utils';
 import { SvgXml } from 'react-native-svg';
 
 import Button from './components/Button';
@@ -22,20 +22,38 @@ const Header = () => {
 }
 
 
+const ExpenseItem = ({ item }) => {
+  const { name, occurrence, quantity, tax, price } = item;
+
+  return (
+    <View style={expensesStyles.expenseItemView}>
+      <TextView texts={[[name, {}], [`${quantity['value']} ${quantity['unit'].toLowerCase()}`, { fontFamily: 'Raleway_700Bold', fontSize: 12, opacity: 0.5 }]]} inline={false} viewStyle={{ paddingTop: 8, }} />
+      <TextView texts={[['₹', { fontSize: 12, }], [price, { paddingRight: 8, fontFamily: 'Raleway_700Bold' }], ['x', { paddingRight: 8, fontSize: 12, }], [occurrence, {}]]}  />
+    </View>
+  )
+}
+
+
 const Expense = ({ expense }) => {
   const { expense_id, s3_image_uri, uploaded_time, is_extraction_finished } = expense;
+  const [showExpenseModal, setShowExpenseModal] = useState(false);
 
   // Extraction is still in progress...
   if (!is_extraction_finished) {
     return (
-      <View style={expensesStyles.expense}>
+      <View style={{ ...expensesStyles.expense, opacity: 0.5 }}>
+        <TextView
+          texts={[[parseDateTime(uploaded_time, 'D'), { fontFamily: 'Raleway_900Black' }], [parseDateTime(uploaded_time, 'MMMM', 3), {}], [parseDateTime(uploaded_time, 'HH:mm'), { opacity: 0.5, fontSize: 12, }]]}
+          viewStyle={{ alignItems: 'center', padding: 8, }}
+          inline={false}
+        />
         <ActivityIndicator size="large" color="#0F172A" style={expensesStyles.icon} />
         <View style={expensesStyles.contentView}>
-          <View style={{ ...expensesStyles.line, width: '50%' }}></View>
-          <View style={{ ...expensesStyles.line, width: '60%' }}></View>
-          <View style={{ ...expensesStyles.line, width: '75%', height: 4 }}></View>
-          <TextView texts={[['id:', { fontFamily: 'Raleway_700Bold' }], [expense_id, { fontSize: 12, }]]} />
-          <TextView texts={[[parseDateTime(uploaded_time), { fontFamily: 'Raleway_700Bold' }]]} />
+          <TextView texts={[['₹', { fontFamily: 'Raleway_700Bold' }], ['$$$', { fontFamily: 'Raleway_900Black', fontSize: 24 }], ['/-', { fontFamily: 'Raleway_700Bold' }]]} />
+          <View style={{ ...expensesStyles.line, width: '60%', marginTop: 8, height: 6 }}></View>
+          <View style={{ ...expensesStyles.line, width: '100%', }}></View>
+          <View style={{ ...expensesStyles.line, width: '120%', }}></View>
+          <View style={{ ...expensesStyles.line, width: '160%', height: 4, }}></View>
         </View>
       </View>
     )
@@ -43,22 +61,108 @@ const Expense = ({ expense }) => {
   
   // Expense...
   const { datetime, shop, expense_type, bill_amount, items, delivery, expense_extraction_time } = expense;
-  const { paid } = bill_amount;
   return (
-    <View style={expensesStyles.expense}>
+    <TouchableOpacity style={expensesStyles.expense} onPress={() => setShowExpenseModal(true)}>
+
+      <TextView
+        texts={[[parseDateTime(datetime, 'D'), { fontFamily: 'Raleway_900Black' }], [parseDateTime(datetime, 'MMMM', 3), {}], [parseDateTime(datetime, 'HH:mm'), { opacity: 0.5, fontSize: 12, }]]}
+        viewStyle={{ alignItems: 'center', padding: 8, }}
+        inline={false}
+      />
       <SvgXml xml={icons[expense_type]} {...expensesStyles.icon} />
       <View style={expensesStyles.contentView}>
-        <TextView texts={[['₹', { fontFamily: 'Raleway_700Bold' }], [paid, { fontFamily: 'Raleway_900Black', fontSize: 24 }], ['/-', { fontFamily: 'Raleway_700Bold' }]]} />
+        <TextView texts={[['₹', { fontFamily: 'Raleway_700Bold' }], [bill_amount['paid'], { fontFamily: 'Raleway_900Black', fontSize: 24 }], ['/-', { fontFamily: 'Raleway_700Bold' }]]} />
         <TextView texts={[[capitalizeString(shop['name']), { fontFamily: 'Raleway_700Bold', marginTop: 8 }]]} />
         <TextView texts={[...items.map(i => [`  •  ${i['name']}`, {}])]} inline={false} />
-        <TextView texts={[[parseDateTime(uploaded_time), { fontFamily: 'Raleway_700Bold', marginTop: 8 }]]} />
       </View>
-    </View>
+      
+      <Modal presentationStyle="overFullScreen" animationType='fade' visible={showExpenseModal} transparent={true} onRequestClose={() => setShowExpenseModal(false)}>
+        <View style={expensesStyles.expenseInDetailViewBackground}>
+          <ScrollView style={expensesStyles.expenseInDetailScrollView}>
+            <View style={expensesStyles.expenseInDetailView}>
+
+              <View style={expensesStyles.expenseInDetailHeader}>
+                <TextView texts={[[parseDateTime(datetime, 'HH:mm:SS'), { fontFamily: 'Raleway_900Black', opacity: 0.5 }], [parseDateTime(datetime, 'D MMMM, YYYY'), { fontFamily: 'Raleway_900Black' }]]} inline={false} />
+                <Button
+                  icon={<MaterialCommunityIcons name="close" color={'#0F172A'} size={24} />}
+                  buttonStyle={{ borderWidth: 0, padding: 4 }}
+                  onPress={() => setShowExpenseModal(false)}
+                />
+              </View>
+
+              <View style={expensesStyles.expenseInDetailAmount}>
+                <View style={expensesStyles.expenseInDetailAmountView}>
+                  <View>
+                    <TextView texts={[['₹', { fontFamily: 'Raleway_700Bold' }], [bill_amount['paid'], { fontFamily: 'Raleway_900Black', fontSize: 24 }], ['/-', { fontFamily: 'Raleway_700Bold' }]]} />
+                    <TextView texts={[[capitalizeString(shop['name']), { fontFamily: 'Raleway_900Black', marginTop: 4 }]]} />
+                  </View>
+                  <SvgXml xml={icons[expense_type]} {...expensesStyles.icon} />
+                </View>
+                <TextView texts={[[shop['address'], { opacity: 0.75, fontSize: 12 }]]} />
+                <TextView texts={[[beautifyMobileNo(shop['contact_no']), { fontFamily: 'Raleway_700Bold', opacity: 0.75, fontSize: 12 }]]} />
+              </View>
+
+              <View style={expensesStyles.expenseInDetailItems}>
+                {items.map(item => <ExpenseItem key={item['name']} item={item} />)}
+              </View>
+
+              <View style={expensesStyles.expenseInDetailPrice}>
+                <View style={expensesStyles.expenseInDetailPriceItem}>
+                  <TextView texts={[['Total', { fontSize: 12, fontFamily: 'Raleway_700Bold' }]]} />
+                  <TextView texts={[['₹', { fontFamily: 'Raleway_700Bold' }], [bill_amount['item_total'], { fontFamily: 'Raleway_900Black' }]]} />
+                </View>
+                <View style={expensesStyles.expenseInDetailPriceItem}>
+                  <TextView texts={[['Delivery', { fontSize: 12, fontFamily: 'Raleway_700Bold' }]]} />
+                  <TextView texts={[['+ ', { fontFamily: 'Raleway_700Bold' }], ['₹', { fontFamily: 'Raleway_700Bold' }], [bill_amount['delivery'], { fontFamily: 'Raleway_900Black' }]]} />
+                </View>
+                <View style={expensesStyles.expenseInDetailPriceItem}>
+                  <TextView texts={[['Discount', { fontSize: 12, fontFamily: 'Raleway_700Bold' }]]} />
+                  <TextView texts={[['- ', { fontFamily: 'Raleway_700Bold' }], ['₹', { fontFamily: 'Raleway_700Bold' }], [bill_amount['discount'], { fontFamily: 'Raleway_900Black' }]]} />
+                </View>
+                <View style={expensesStyles.expenseInDetailPriceItem}>
+                  <TextView texts={[['Tax', { fontSize: 12, fontFamily: 'Raleway_700Bold' }]]} />
+                  <TextView texts={[['+ ', { fontFamily: 'Raleway_700Bold' }], ['₹', { fontFamily: 'Raleway_700Bold' }], [bill_amount['tax'], { fontFamily: 'Raleway_900Black' }]]} />
+                </View>
+                <View style={expensesStyles.expenseInDetailItemsCalculationLine}></View>
+                <View style={{ ...expensesStyles.expenseInDetailPriceItem, paddingTop: 8, }}>
+                  <TextView texts={[['Paid', { fontSize: 12, fontFamily: 'Raleway_900Black' }]]} />
+                  <TextView texts={[['₹', { fontFamily: 'Raleway_700Bold' }], [bill_amount['paid'], { fontFamily: 'Raleway_900Black' }]]} />
+                </View>
+              </View>
+
+              <View style={expensesStyles.expenseInDetailDelivery}>
+                <TextView texts={[['Delivered to', { fontSize: 12, paddingRight: 4 }], [capitalizeString(delivery['address_tag']), { fontSize: 12, fontFamily: 'Raleway_900Black' }]]} />
+                <TextView texts={[[delivery['address'], { opacity: 0.75, fontSize: 12 }]]} />
+              </View>
+
+            </View>
+          </ScrollView>
+        </View>
+      </Modal>
+
+    </TouchableOpacity>
   );
 }
 
 
 const PersonalExpenses = ({ personalExpenses }) => {
+  const { navigation } = useContext(SharedContext);
+
+  if (!userLoggedIn()) {
+    return (
+      <View style={expensesStyles.innerContainer}>
+        <Button
+          text="Login to see your expenses!"
+          buttonStyle={{ height: 128 }}
+          buttonTextStyle={{ marginHorizontal: 16 }}
+          icon={<AntDesign name='login' size={24} color="#0F172A" />}
+          showIconAfter={true}
+          onPress={() => navigation.navigate('My Profile')}
+        />
+      </View>
+    );
+  }
+
   return (
     <View style={expensesStyles.innerContainer}>
       {personalExpenses.map(expense => {
@@ -72,6 +176,23 @@ const PersonalExpenses = ({ personalExpenses }) => {
 
 
 const GroupExpenses = () => {
+  const { navigation } = useContext(SharedContext);
+
+  if (!userLoggedIn()) {
+    return (
+      <View style={expensesStyles.innerContainer}>
+        <Button
+          text="Login to see your expenses!"
+          buttonStyle={{ height: 128 }}
+          buttonTextStyle={{ marginHorizontal: 16 }}
+          icon={<AntDesign name='login' size={24} color="#0F172A" />}
+          showIconAfter={true}
+          onPress={() => navigation.navigate('My Profile')}
+        />
+      </View>
+    );
+  }
+
   return (
     <View style={expensesStyles.innerContainer}>
 
@@ -81,7 +202,7 @@ const GroupExpenses = () => {
 
 
 const MyExpenses = () => {
-  const [isPersonalExpensesVisible, setIsPersonalExpensesVisible] = useState(false);
+  const [isPersonalExpensesVisible, setIsPersonalExpensesVisible] = useState(true);
   const [isGroupExpensesVisible, setIsGroupExpensesVisible] = useState(false);
   const [personalExpenses, setPersonalExpenses] = useState([]);
   const [groupExpenses, setGroupExpenses] = useState([]);
@@ -102,11 +223,11 @@ const MyExpenses = () => {
   }
 
   useEffect(() => {
-    if (personalExpenses.length === 0) {
+    if (userLoggedIn() && personalExpenses.length === 0) {
       fetchPersonalExpenses();
       setBuffering(true);
     }
-  }, [isPersonalExpensesVisible])
+  }, [isPersonalExpensesVisible]);
 
   let [fontsLoaded] = useFonts({
     Raleway_300Light,
@@ -155,15 +276,14 @@ const MyExpenses = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
   },
   header: {
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingBottom: 16,
-    borderBottomWidth: 1
+    borderBottomWidth: 1,
+    paddingVertical: 8,
+    marginHorizontal: 16,
   },
   headerText: {
     fontFamily: 'Raleway_700Bold',
@@ -175,7 +295,8 @@ const expensesStyles = StyleSheet.create({
   container: {
     flex: 1,
     paddingVertical: 8,
-    paddingBottom: 48
+    paddingBottom: 48,
+    paddingHorizontal: 16,
   },
   innerContainer: {
     flex: 1,
@@ -191,17 +312,21 @@ const expensesStyles = StyleSheet.create({
     borderWidth: 1,
     marginVertical: 4,
     maxWidth: '100%',
+    minHeight: 96,
   },
   icon: {
     paddingVertical: 8,
-    paddingLeft: 24,
-    paddingRight: 32,
+    marginLeft: 8,
+    marginRight: 16,
     width: 40,
     height: 40,
   },
   contentView: {
     display: 'flex',
     flexDirection: 'column',
+    borderLeftWidth: 0.5,
+    borderStyle: 'dashed',
+    paddingLeft: 16,
   },
   line: {
     height: 2,
@@ -209,6 +334,78 @@ const expensesStyles = StyleSheet.create({
     backgroundColor: '#0F172A',
     marginTop: 4,
   },
+  expenseInDetailViewBackground: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+  },
+  expenseInDetailScrollView: {
+    maxHeight: '75%',
+    margin: 16,
+  },
+  expenseInDetailView: {
+    padding: 16,
+    borderWidth: 2,
+    backgroundColor: '#fff',
+  },
+  expenseInDetailHeader: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignContent: 'center',
+    paddingBottom: 8,
+    borderBottomWidth: 0.5,
+    borderStyle: 'dashed',
+  },
+  expenseInDetailAmount: {
+    display: 'flex',
+    flexDirection: 'column',
+    marginTop: 16,
+    paddingBottom: 8,
+    borderBottomWidth: 0.5,
+    borderStyle: 'dashed',
+  },
+  expenseInDetailAmountView: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  expenseInDetailDelivery: {
+    marginTop: 16,
+  },
+  expenseInDetailItems: {
+    marginTop: 16,
+    paddingBottom: 8,
+    borderBottomWidth: 0.5,
+    borderStyle: 'dashed',
+  },
+  expenseItemView: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  expenseInDetailItemsCalculationLine: {
+    marginTop: 8,
+    borderTopWidth: 0.5,
+    borderStyle: 'dashed',
+    display: 'flex',
+  },
+  expenseInDetailPrice: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    paddingVertical: 8,
+    marginBottom: 8,
+    borderBottomWidth: 0.5,
+    borderStyle: 'dashed',
+  },
+  expenseInDetailPriceItem: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between'
+  }
 });
 
 

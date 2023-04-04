@@ -24,6 +24,13 @@ def get_current_time():
     return datetime.datetime.utcnow().replace(tzinfo=pytz.UTC).strftime('%Y-%m-%dT%H:%M:%SZ')
 
 
+def get_page_items(_list, items_per_page: int, page_no: int):
+    start_index = (page_no - 1) * items_per_page
+    end_index = page_no * items_per_page
+
+    return _list[start_index:end_index]
+
+
 def lambda_handler(event, context):
     # Send OTP to the user...
     if event['resource'] == '/send-otp':
@@ -119,8 +126,7 @@ def lambda_handler(event, context):
         db = client[DB_NAME]
         users_collection = db['users']
         
-        user = event['body']
-        phone_number = user['phone_number']
+        phone_number = event['body']['phone_number']
 
         # Checking if any user with the phone number already exists...
         user = users_collection.find_one({ 'phone_number': phone_number })
@@ -137,5 +143,43 @@ def lambda_handler(event, context):
             'body': {
                 'message': "Yay! You're in!",
                 'user': parse_mongo_dict(user)
+            }
+        }
+        
+
+    # Get user expenses...
+    if event['resource'] == '/get-personal-expenses':
+        client = pymongo.MongoClient(f"mongodb+srv://{DB_USERNAME}:{DB_PASSWORD}@{ORG_NAME}.{DB_CLUSTER}.mongodb.net/?retryWrites=true&w=majority")
+        db = client[DB_NAME]
+        users_collection = db['users']
+        expenses_collection = db['expenses']
+
+        phone_number = event['body']['phone_number']
+        items_per_page = event['body']['items_per_page']
+        page_no = event['body']['page_no']
+
+        # Checking if any user with the phone number already exists...
+        user = users_collection.find_one({ 'phone_number': phone_number })
+        if not user:
+            return {
+                'statusCode': 500,
+                'body': {
+                    'message': f'Oops! No user with phone no. {phone_number} found! Login!'
+                }
+            }
+
+        # Fetching user expenses...
+        all_expenses = expenses_collection.find_one({ 'user_id': user['_id'] })['expenses']
+        # Sorting in descending order of expense uploaded time...
+        sorted_expenses = sorted(all_expenses, key=lambda k: datetime.datetime.strptime(k['uploaded_time'], "%Y-%m-%dT%H:%M:%SZ").timestamp(), reverse=True)
+        # Getting expense items which are requested...
+        expenses = get_page_items(sorted_expenses, items_per_page, page_no)
+        
+        return {
+            'statusCode': 200,
+            'body': {
+                'message': f'Fetched expenses for page #{page_no} successfully.',
+                'expenses': expenses,
+                'total_expenses': len(all_expenses)
             }
         }

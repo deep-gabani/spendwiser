@@ -5,5 +5,5 @@
     "awsSecretKey": "9jNqvIjkAwte5vRwj0tzcHzAcIo21MUQr7wDVtWy",
     "awsRegion": "ap-south-1",
     "awsS3BucketForExpenseImages": "process-expense-image-files",
-    "maxResults": 10
+    "itemsPerPage": 10
 }

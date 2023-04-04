@@ -1,4 +1,4 @@
-import { apiBaseUrl, awsApiStageName } from './config';
+import { apiBaseUrl, awsApiStageName, itemsPerPage } from './config';
 import { getState } from './store';
 
 
@@ -110,9 +110,36 @@ const login = async ({ phone_number }) => {
 }
 
 
+const getPersonalExpenses = async ({ phone_number, page_no }) => {
+  const url = `${apiBaseUrl}/${awsApiStageName}/user/get-personal-expenses`;
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        'resource': '/get-personal-expenses',
+        'body': {
+          'phone_number': phone_number || '',
+          'page_no': page_no,
+          'items_per_page': itemsPerPage
+        }
+      })
+    });
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.log('Error fetching expenses:', error);
+    throw error;
+  }
+}
+
+
 export {
     submitExpenseImage,
     sendOtp,
     signup,
-    login
+    login,
+    getPersonalExpenses
 };

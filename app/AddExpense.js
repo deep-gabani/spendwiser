@@ -10,7 +10,6 @@ import { awsAccessKey, awsSecretKey, awsS3BucketForExpenseImages } from './confi
 import { getState, SharedContext } from './store';
 
 import Button from './components/Button';
-import Buffering from './components/Buffering';
 
 
 const windowWidth = Dimensions.get('window').width;

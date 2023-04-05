@@ -1,4 +1,11 @@
 import moment from 'moment';
+import { S3 } from 'aws-sdk';
+import { awsAccessKey, awsSecretKey } from './config';
+
+const s3 = new S3({
+    accessKeyId: awsAccessKey,
+    secretAccessKey: awsSecretKey,
+});
 
 
 const validatePhoneNumber = (inputText) => {
@@ -35,7 +42,45 @@ const beautifyMobileNo = (phone_no) => {
 
     return `${country_code} ${first_five_digits}-${last_five_digits}`
 }
-  
+
+
+function parseS3ImageUri(uri) {
+    const regex = /^s3:\/\/([^/]+)\/(.+)\.([^.]+)$/;
+    const matches = uri.match(regex);
+    
+    if (!matches) {
+      throw new Error('Invalid S3 URI');
+    }
+    
+    return {
+      bucketName: matches[1],
+      key: `${matches[2]}.${matches[3]}`,
+      extension: matches[3]
+    };
+}
+
+
+const getS3Image = async (uri) => {
+    const { bucketName, key, extension } = parseS3ImageUri(uri);
+    
+    s3.getObject({Bucket: bucketName, Key: key}, (err, data) => {
+      if (err) {
+        console.log(err);
+      } else {
+        return `data:image/jpeg;base64,${data.Body.toString('base64')}`;
+      }
+    });
+
+    try {
+        const data = await s3.getObject({Bucket: bucketName, Key: key}).promise();
+        const imageSrc = `data:image/${extension};base64,${data.Body.toString('base64')}`;
+        return imageSrc;
+    } catch (err) {
+        console.log('Error downloading image from S3:', err);
+        throw err;
+    }
+}
+
 
 export {
     validatePhoneNumber,
@@ -43,4 +88,5 @@ export {
     parseDateTime,
     capitalizeString,
     beautifyMobileNo,
+    getS3Image,
 };

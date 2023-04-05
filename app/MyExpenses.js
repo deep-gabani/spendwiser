@@ -1,16 +1,20 @@
 import React, { useContext, useState, useEffect } from 'react';
-import { Text, View, Image, StyleSheet, ScrollView, ActivityIndicator, Modal, TouchableOpacity } from 'react-native';
+import { View, Image, StyleSheet, ScrollView, ActivityIndicator, Modal, TouchableOpacity, Dimensions, TouchableWithoutFeedback } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFonts, Raleway_300Light, Raleway_500Medium, Raleway_700Bold, Raleway_900Black } from '@expo-google-fonts/raleway';
 import { Ionicons, AntDesign, MaterialCommunityIcons, FontAwesome } from '@expo/vector-icons';
 import { getState, setState, SharedContext, userLoggedIn } from './store';
 import * as apis from './apis.js';
-import { parseDateTime, capitalizeString, beautifyMobileNo } from './utils';
+import { parseDateTime, capitalizeString, beautifyMobileNo, getS3Image } from './utils';
 import { SvgXml } from 'react-native-svg';
 
 import Button from './components/Button';
 import TextView from './components/TextView';
 import { icons } from './constants';
+
+
+const windowWidth = Dimensions.get('window').width;
+const windowHeight = Dimensions.get('window').height;
 
 
 const Header = () => {
@@ -37,6 +41,21 @@ const ExpenseItem = ({ item }) => {
 const Expense = ({ expense }) => {
   const { expense_id, s3_image_uri, uploaded_time, is_extraction_finished } = expense;
   const [showExpenseModal, setShowExpenseModal] = useState(false);
+  const [showImageEnlarged, setShowImageEnlarged] = useState(false);
+  const [imageSrcData, setImageSrcData] = useState(false);
+  const { setToast, setBuffering } = useContext(SharedContext);
+  // setBuffering(false);
+
+  const showExpenseInDetail = async () => {
+    setBuffering(true);
+
+    // Fetching the image from the S3 bucket...
+    setImageSrcData(await getS3Image(s3_image_uri));
+
+    setBuffering(false);
+    setShowExpenseModal(true);
+  }
+
 
   // Extraction is still in progress...
   if (!is_extraction_finished) {
@@ -60,9 +79,9 @@ const Expense = ({ expense }) => {
   }
   
   // Expense...
-  const { datetime, shop, expense_type, bill_amount, items, delivery, expense_extraction_time } = expense;
+  const { datetime, shop, expense_type, bill_amount, items, delivery } = expense;
   return (
-    <TouchableOpacity style={expensesStyles.expense} onPress={() => setShowExpenseModal(true)}>
+    <TouchableOpacity style={expensesStyles.expense} onPress={showExpenseInDetail}>
 
       <TextView
         texts={[[parseDateTime(datetime, 'D'), { fontFamily: 'Raleway_900Black' }], [parseDateTime(datetime, 'MMMM', 3), {}], [parseDateTime(datetime, 'HH:mm'), { opacity: 0.5, fontSize: 12, }]]}
@@ -77,67 +96,96 @@ const Expense = ({ expense }) => {
       </View>
       
       <Modal presentationStyle="overFullScreen" animationType='fade' visible={showExpenseModal} transparent={true} onRequestClose={() => setShowExpenseModal(false)}>
-        <View style={expensesStyles.expenseInDetailViewBackground}>
-          <ScrollView style={expensesStyles.expenseInDetailScrollView}>
-            <View style={expensesStyles.expenseInDetailView}>
+        <TouchableWithoutFeedback onPress={() => setShowExpenseModal(false)}>
+          <View style={expensesStyles.expenseInDetailViewBackground}>
+            <ScrollView style={expensesStyles.expenseInDetailScrollView}>
+              <TouchableWithoutFeedback onPress={() => {}}>
+                <View style={expensesStyles.expenseInDetailView}>
 
-              <View style={expensesStyles.expenseInDetailHeader}>
-                <TextView texts={[[parseDateTime(datetime, 'HH:mm:SS'), { fontFamily: 'Raleway_900Black', opacity: 0.5 }], [parseDateTime(datetime, 'D MMMM, YYYY'), { fontFamily: 'Raleway_900Black' }]]} inline={false} />
-                <Button
-                  icon={<MaterialCommunityIcons name="close" color={'#0F172A'} size={24} />}
-                  buttonStyle={{ borderWidth: 0, padding: 4 }}
-                  onPress={() => setShowExpenseModal(false)}
-                />
-              </View>
-
-              <View style={expensesStyles.expenseInDetailAmount}>
-                <View style={expensesStyles.expenseInDetailAmountView}>
-                  <View>
-                    <TextView texts={[['₹', { fontFamily: 'Raleway_700Bold' }], [bill_amount['paid'], { fontFamily: 'Raleway_900Black', fontSize: 24 }], ['/-', { fontFamily: 'Raleway_700Bold' }]]} />
-                    <TextView texts={[[capitalizeString(shop['name']), { fontFamily: 'Raleway_900Black', marginTop: 4 }]]} />
+                  <View style={expensesStyles.expenseInDetailHeader}>
+                    <TextView texts={[[parseDateTime(datetime, 'HH:mm:SS'), { fontFamily: 'Raleway_900Black', opacity: 0.5 }], [parseDateTime(datetime, 'D MMMM, YYYY'), { fontFamily: 'Raleway_900Black' }]]} inline={false} />
+                    <Button
+                      icon={<MaterialCommunityIcons name="close" color={'#0F172A'} size={24} />}
+                      buttonStyle={{ borderWidth: 0, padding: 4 }}
+                      onPress={() => setShowExpenseModal(false)}
+                    />
                   </View>
-                  <SvgXml xml={icons[expense_type]} {...expensesStyles.icon} />
-                </View>
-                <TextView texts={[[shop['address'], { opacity: 0.75, fontSize: 12 }]]} />
-                <TextView texts={[[beautifyMobileNo(shop['contact_no']), { fontFamily: 'Raleway_700Bold', opacity: 0.75, fontSize: 12 }]]} />
-              </View>
 
-              <View style={expensesStyles.expenseInDetailItems}>
-                {items.map(item => <ExpenseItem key={item['name']} item={item} />)}
-              </View>
+                  <View style={expensesStyles.expenseInDetailAmount}>
+                    <View style={expensesStyles.expenseInDetailAmountView}>
+                      <View>
+                        <TextView texts={[['₹', { fontFamily: 'Raleway_700Bold' }], [bill_amount['paid'], { fontFamily: 'Raleway_900Black', fontSize: 24 }], ['/-', { fontFamily: 'Raleway_700Bold' }]]} />
+                        <TextView texts={[[capitalizeString(shop['name']), { fontFamily: 'Raleway_900Black', marginTop: 4 }]]} />
+                      </View>
 
-              <View style={expensesStyles.expenseInDetailPrice}>
-                <View style={expensesStyles.expenseInDetailPriceItem}>
-                  <TextView texts={[['Total', { fontSize: 12, fontFamily: 'Raleway_700Bold' }]]} />
-                  <TextView texts={[['₹', { fontFamily: 'Raleway_700Bold' }], [bill_amount['item_total'], { fontFamily: 'Raleway_900Black' }]]} />
-                </View>
-                <View style={expensesStyles.expenseInDetailPriceItem}>
-                  <TextView texts={[['Delivery', { fontSize: 12, fontFamily: 'Raleway_700Bold' }]]} />
-                  <TextView texts={[['+ ', { fontFamily: 'Raleway_700Bold' }], ['₹', { fontFamily: 'Raleway_700Bold' }], [bill_amount['delivery'], { fontFamily: 'Raleway_900Black' }]]} />
-                </View>
-                <View style={expensesStyles.expenseInDetailPriceItem}>
-                  <TextView texts={[['Discount', { fontSize: 12, fontFamily: 'Raleway_700Bold' }]]} />
-                  <TextView texts={[['- ', { fontFamily: 'Raleway_700Bold' }], ['₹', { fontFamily: 'Raleway_700Bold' }], [bill_amount['discount'], { fontFamily: 'Raleway_900Black' }]]} />
-                </View>
-                <View style={expensesStyles.expenseInDetailPriceItem}>
-                  <TextView texts={[['Tax', { fontSize: 12, fontFamily: 'Raleway_700Bold' }]]} />
-                  <TextView texts={[['+ ', { fontFamily: 'Raleway_700Bold' }], ['₹', { fontFamily: 'Raleway_700Bold' }], [bill_amount['tax'], { fontFamily: 'Raleway_900Black' }]]} />
-                </View>
-                <View style={expensesStyles.expenseInDetailItemsCalculationLine}></View>
-                <View style={{ ...expensesStyles.expenseInDetailPriceItem, paddingTop: 8, }}>
-                  <TextView texts={[['Paid', { fontSize: 12, fontFamily: 'Raleway_900Black' }]]} />
-                  <TextView texts={[['₹', { fontFamily: 'Raleway_700Bold' }], [bill_amount['paid'], { fontFamily: 'Raleway_900Black' }]]} />
-                </View>
-              </View>
+                      <TouchableOpacity onPress={() => setShowImageEnlarged(true)}>
+                        <Image
+                          source={{ uri: imageSrcData }}
+                          style={{ ...expensesStyles.icon, marginRight: 0 }}
+                          resizeMode="contain"
+                        />
+                      </TouchableOpacity>
 
-              <View style={expensesStyles.expenseInDetailDelivery}>
-                <TextView texts={[['Delivered to', { fontSize: 12, paddingRight: 4 }], [capitalizeString(delivery['address_tag']), { fontSize: 12, fontFamily: 'Raleway_900Black' }]]} />
-                <TextView texts={[[delivery['address'], { opacity: 0.75, fontSize: 12 }]]} />
-              </View>
+                      <Modal visible={showImageEnlarged} transparent={true} animationType="fade" onRequestClose={() => setShowImageEnlarged(false)}>
+                        <TouchableWithoutFeedback onPress={() => setShowImageEnlarged(false)}>
+                          <View style={expensesStyles.imageEnlargedViewBackground}>
+                            <TouchableWithoutFeedback onPress={() => {}}>
+                              <View>
+                                <Button
+                                  icon={<MaterialCommunityIcons name="close" color={'#fff'} size={24} />}
+                                  buttonStyle={{ borderWidth: 0, padding: 4, justifyContent: 'flex-end' }}
+                                  onPress={() => setShowImageEnlarged(false)}
+                                />
+                                <Image style={expensesStyles.imageEnlarged} source={{ uri: imageSrcData }} resizeMode="contain" />
+                              </View>
+                            </TouchableWithoutFeedback>
+                          </View>
+                        </TouchableWithoutFeedback>
+                      </Modal>
 
-            </View>
-          </ScrollView>
-        </View>
+                    </View>
+                    <TextView texts={[[shop['address'], { opacity: 0.75, fontSize: 12 }]]} />
+                    <TextView texts={[[beautifyMobileNo(shop['contact_no']), { fontFamily: 'Raleway_700Bold', opacity: 0.75, fontSize: 12 }]]} />
+                  </View>
+
+                  <View style={expensesStyles.expenseInDetailItems}>
+                    {items.map(item => <ExpenseItem key={item['name']} item={item} />)}
+                  </View>
+
+                  <View style={expensesStyles.expenseInDetailPrice}>
+                    <View style={expensesStyles.expenseInDetailPriceItem}>
+                      <TextView texts={[['Total', { fontSize: 12, fontFamily: 'Raleway_700Bold' }]]} />
+                      <TextView texts={[['₹', { fontFamily: 'Raleway_700Bold' }], [bill_amount['item_total'], { fontFamily: 'Raleway_900Black' }]]} />
+                    </View>
+                    <View style={expensesStyles.expenseInDetailPriceItem}>
+                      <TextView texts={[['Delivery', { fontSize: 12, fontFamily: 'Raleway_700Bold' }]]} />
+                      <TextView texts={[['+ ', { fontFamily: 'Raleway_700Bold' }], ['₹', { fontFamily: 'Raleway_700Bold' }], [bill_amount['delivery'], { fontFamily: 'Raleway_900Black' }]]} />
+                    </View>
+                    <View style={expensesStyles.expenseInDetailPriceItem}>
+                      <TextView texts={[['Discount', { fontSize: 12, fontFamily: 'Raleway_700Bold' }]]} />
+                      <TextView texts={[['- ', { fontFamily: 'Raleway_700Bold' }], ['₹', { fontFamily: 'Raleway_700Bold' }], [bill_amount['discount'], { fontFamily: 'Raleway_900Black' }]]} />
+                    </View>
+                    <View style={expensesStyles.expenseInDetailPriceItem}>
+                      <TextView texts={[['Tax', { fontSize: 12, fontFamily: 'Raleway_700Bold' }]]} />
+                      <TextView texts={[['+ ', { fontFamily: 'Raleway_700Bold' }], ['₹', { fontFamily: 'Raleway_700Bold' }], [bill_amount['tax'], { fontFamily: 'Raleway_900Black' }]]} />
+                    </View>
+                    <View style={expensesStyles.expenseInDetailItemsCalculationLine}></View>
+                    <View style={{ ...expensesStyles.expenseInDetailPriceItem, paddingTop: 8, }}>
+                      <TextView texts={[['Paid', { fontSize: 12, fontFamily: 'Raleway_900Black' }]]} />
+                      <TextView texts={[['₹', { fontFamily: 'Raleway_700Bold' }], [bill_amount['paid'], { fontFamily: 'Raleway_900Black' }]]} />
+                    </View>
+                  </View>
+
+                  <View style={expensesStyles.expenseInDetailDelivery}>
+                    <TextView texts={[['Delivered to', { fontSize: 12, paddingRight: 4 }], [capitalizeString(delivery['address_tag']), { fontSize: 12, fontFamily: 'Raleway_900Black' }]]} />
+                    <TextView texts={[[delivery['address'], { opacity: 0.75, fontSize: 12 }]]} />
+                  </View>
+
+                </View>
+              </TouchableWithoutFeedback>
+            </ScrollView>
+          </View>
+        </TouchableWithoutFeedback>
       </Modal>
 
     </TouchableOpacity>
@@ -405,7 +453,22 @@ const expensesStyles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between'
-  }
+  },
+  expenseInDetailImage: {
+    aspectRatio: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  imageEnlargedViewBackground: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imageEnlarged: {
+    width: windowWidth - 64,
+    height: windowHeight - 128,
+  },
 });
 
 

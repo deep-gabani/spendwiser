@@ -31,13 +31,19 @@ We total have below lambda functions:
     - Description:
         - It contains the core business logic of processing the image and extracting the expense details from it.
         - It will update the DB with the extracted expense details at the end.
-- start-processing-expense-image
+- expense
     - API corresponding to it:
         - POST **/start-processing-expense-image**
+        - POST **/add-expense-manual**
     - Description:
-        - When the user submit the expense image in the app, the app will upload the expense image to S3 bucket and get the image URI.
-        - The app will then call this function to trigger the processing of the expense image.
-        - This function will in turn call `process-expense-image` lambda function asyncronously and respond with the message that the extraction has begun.
+        - This function is designed to handle all expense related services.
+        - start-processing-expense-image
+            - When the user submit the expense image in the app, the app will upload the expense image to S3 bucket and get the image URI.
+            - The app will then call this function to trigger the processing of the expense image.
+            - This function will in turn call `process-expense-image` lambda function asyncronously and respond with the message that the extraction has begun.
+        - add-expense-manual
+            - When the user submit the expense by manually entering their expense details, it will
+            simply parse the input and insert into the database.
 - user
     - API corresponding to it:
         - POST **/signup**

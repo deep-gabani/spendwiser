@@ -1,6 +1,7 @@
 import moment from 'moment';
 import { S3 } from 'aws-sdk';
-import { awsAccessKey, awsSecretKey } from './config';
+import { getState } from './store';
+import { awsAccessKey, awsSecretKey, awsS3BucketForExpenseImages } from './config';
 
 const s3 = new S3({
     accessKeyId: awsAccessKey,
@@ -20,6 +21,14 @@ const validateEmail = (email) => {
 }
 
 
+const convertDateAndTimeToDateTimeString = (date, time) => {
+    const dateTimeString = `${date} ${time}`;
+    const momentObj = moment(dateTimeString, 'DD/MM/YYYY HH:mm:ss');
+    const isoDateTime = momentObj.utc().format('YYYY-MM-DDTHH:mm:ss[Z]');
+    return isoDateTime;
+}
+
+
 const parseDateTime = ( datetime, format = 'Do MMMM, YYYY HH:mm', len = -1 ) => {
     const dateString = moment(datetime).format(format);
     if (len === -1) {
@@ -29,7 +38,18 @@ const parseDateTime = ( datetime, format = 'Do MMMM, YYYY HH:mm', len = -1 ) => 
 }
 
 
+const getCurrentDateTime = () => {
+    const momentObj = moment();
+    const isoDateTime = momentObj.utc().format('YYYY-MM-DDTHH:mm:ss[Z]');
+    return isoDateTime;
+}
+
+
 const capitalizeString = (string) => {
+    if (!string) {
+        return "";
+    }
+
     const words = string.split(" ");
     const capitalizedWords = words.map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase());
     return capitalizedWords.join(" ");
@@ -60,6 +80,29 @@ function parseS3ImageUri(uri) {
 }
 
 
+const uploadImageToS3 = async (image) => {
+    const { uri } = image;
+    const fileName = uri.split('/').pop();
+    const extension = fileName.split('.').pop();
+  
+    const imageData = await fetch(uri);
+    const blobData = await imageData.blob();
+  
+    const { phone_number } = getState('user');
+  
+    const params = {
+      Bucket: awsS3BucketForExpenseImages,
+      Key: `${phone_number}/${fileName}`,
+      Body: blobData,
+      ContentType: `image/${extension}`,
+    };
+  
+    await s3.putObject(params).promise();
+    const s3_image_uri = `s3://${awsS3BucketForExpenseImages}/${phone_number}/${fileName}`
+    return s3_image_uri;
+}
+
+
 const getS3Image = async (uri) => {
     const { bucketName, key, extension } = parseS3ImageUri(uri);
     
@@ -85,8 +128,11 @@ const getS3Image = async (uri) => {
 export {
     validatePhoneNumber,
     validateEmail,
+    convertDateAndTimeToDateTimeString,
     parseDateTime,
+    getCurrentDateTime,
     capitalizeString,
     beautifyMobileNo,
+    uploadImageToS3,
     getS3Image,
 };

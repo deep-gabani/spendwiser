@@ -3,7 +3,7 @@ import { getState } from './store';
 
 
 const submitExpenseImage = async ({ s3_image_uri }) => {
-  const url = `${apiBaseUrl}/${awsApiStageName}/start-processing-expense-image`;
+  const url = `${apiBaseUrl}/${awsApiStageName}/expense/start-processing-expense-image`;
   const { user } = getState();
   try {
     const response = await fetch(url, {
@@ -12,8 +12,11 @@ const submitExpenseImage = async ({ s3_image_uri }) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        'phone_number': user['phone_number'],
-        's3_image_uri': s3_image_uri,
+        'resource': '/start-processing-expense-image',
+        'body': {
+          'phone_number': user['phone_number'],
+          's3_image_uri': s3_image_uri,
+        }
       }),
     });
     const data = await response.json();
@@ -23,6 +26,34 @@ const submitExpenseImage = async ({ s3_image_uri }) => {
     throw error;
   }
 };
+
+
+const submitManualExpense = async ({ expense }) => {
+  const url = `${apiBaseUrl}/${awsApiStageName}/expense/add-expense-manual`;
+  const { user } = getState();
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        'resource': '/add-expense-manual',
+        'body': {
+          'phone_number': user['phone_number'],
+          // Note: This expense does not have a few fields like item_total, which should
+          // be derived at server end...
+          'expense': expense,
+        }
+      }),
+    });
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.log('Error submitting expense:', error);
+    throw error;
+  }
+}
 
 
 const sendOtp = async ({ phone_number }) => {
@@ -138,6 +169,7 @@ const getPersonalExpenses = async ({ phone_number, page_no }) => {
 
 export {
     submitExpenseImage,
+    submitManualExpense,
     sendOtp,
     signup,
     login,

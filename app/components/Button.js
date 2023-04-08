@@ -3,7 +3,7 @@ import { Text, StyleSheet, TouchableOpacity, Dimensions} from 'react-native';
 import { useFonts, Raleway_300Light, Raleway_500Medium, Raleway_700Bold, Raleway_900Black } from '@expo-google-fonts/raleway';
 
 
-const Button = ({ icon = null, text, onPress, buttonStyle = {}, buttonTextStyle = {}, showIconAfter = false }) => {
+const Button = ({ icon = null, text = null, onPress, buttonStyle = {}, buttonTextStyle = {}, showIconAfter = false }) => {
 
   let [fontsLoaded] = useFonts({
     Raleway_300Light,
@@ -19,7 +19,7 @@ const Button = ({ icon = null, text, onPress, buttonStyle = {}, buttonTextStyle 
   return (
     <TouchableOpacity style={{ ...styles.button, ...buttonStyle }} onPress={onPress}>
       {!showIconAfter && icon && icon}
-      <Text style={{ ...styles.buttonText, ...buttonTextStyle }}>{text}</Text>
+      {text && <Text style={{ ...styles.buttonText, ...buttonTextStyle }}>{text}</Text>}
       {showIconAfter && icon && icon}
     </TouchableOpacity>
   );

@@ -10,6 +10,7 @@ import { SvgXml } from 'react-native-svg';
 
 import Button from './components/Button';
 import TextView from './components/TextView';
+import Collapsible from './components/Collapsible';
 import { icons } from './constants';
 
 
@@ -42,15 +43,17 @@ const Expense = ({ expense }) => {
   const { expense_id, s3_image_uri, uploaded_time, is_extraction_finished } = expense;
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [showImageEnlarged, setShowImageEnlarged] = useState(false);
-  const [imageSrcData, setImageSrcData] = useState(false);
+  const [imageSrcData, setImageSrcData] = useState('');
   const { setToast, setBuffering } = useContext(SharedContext);
-  // setBuffering(false);
+  setBuffering(false);
 
   const showExpenseInDetail = async () => {
     setBuffering(true);
 
     // Fetching the image from the S3 bucket...
-    setImageSrcData(await getS3Image(s3_image_uri));
+    if (s3_image_uri) {
+      setImageSrcData(await getS3Image(s3_image_uri));
+    }
 
     setBuffering(false);
     setShowExpenseModal(true);
@@ -118,13 +121,15 @@ const Expense = ({ expense }) => {
                         <TextView texts={[[capitalizeString(shop['name']), { fontFamily: 'Raleway_900Black', marginTop: 4 }]]} />
                       </View>
 
-                      <TouchableOpacity onPress={() => setShowImageEnlarged(true)}>
-                        <Image
-                          source={{ uri: imageSrcData }}
-                          style={{ ...expensesStyles.icon, marginRight: 0 }}
-                          resizeMode="contain"
-                        />
-                      </TouchableOpacity>
+                      {imageSrcData && 
+                        <TouchableOpacity onPress={() => setShowImageEnlarged(true)}>
+                          <Image
+                            source={{ uri: imageSrcData }}
+                            style={{ ...expensesStyles.icon, marginRight: 0 }}
+                            resizeMode="contain"
+                          />
+                        </TouchableOpacity>
+                      }
 
                       <Modal visible={showImageEnlarged} transparent={true} animationType="fade" onRequestClose={() => setShowImageEnlarged(false)}>
                         <TouchableWithoutFeedback onPress={() => setShowImageEnlarged(false)}>
@@ -294,25 +299,16 @@ const MyExpenses = () => {
       <ScrollView>
         <View style={expensesStyles.container}>
 
-          <Button
-            text="Personal Expenses"
-            icon={<Ionicons name={`ios-chevron-${isPersonalExpensesVisible ? 'down' : 'up'}`} size={24} color="#0F172A" />}
-            onPress={() => setIsPersonalExpensesVisible(!isPersonalExpensesVisible)}
-            buttonStyle={{ padding: 8, justifyContent: 'flex-start' }}
-            buttonTextStyle={{ flex: 1, paddingHorizontal: 8, fontSize: 16, fontFamily: 'Raleway_900Black', }}
-            showIconAfter={true}
+          <Collapsible
+            label="Personal Expenses"
+            component={<PersonalExpenses personalExpenses={personalExpenses} />}
           />
-          {isPersonalExpensesVisible && <PersonalExpenses personalExpenses={personalExpenses} />}
 
-          <Button
-            text="Group Expenses"
-            icon={<Ionicons name={`ios-chevron-${isGroupExpensesVisible ? 'down' : 'up'}`} size={24} color="#0F172A" />}
-            onPress={() => setIsGroupExpensesVisible(!isGroupExpensesVisible)}
-            buttonStyle={{ padding: 8, justifyContent: 'flex-start' }}
-            buttonTextStyle={{ flex: 1, paddingHorizontal: 8, fontSize: 16, fontFamily: 'Raleway_900Black', }}
-            showIconAfter={true}
+          <Collapsible
+            label="Group Expenses"
+            component={<GroupExpenses />}
+            showByDefault={false}
           />
-          {isGroupExpensesVisible && <GroupExpenses />}
 
         </View>
       </ScrollView>

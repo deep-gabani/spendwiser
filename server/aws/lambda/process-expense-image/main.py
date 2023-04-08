@@ -25,8 +25,8 @@ def lambda_handler(event, context):
     event parameters:
         - user_id: User document id (_id) in str from the database.
         - expense_id: 32-digit unique id. It will be used to update the DB with the extracted expense data.
-                      (Before calling this function, start-processing-expense-image function will create an
-                      empty expense with this expense id in the expenses collection.)
+                      (Before calling this function, expense function's start-processing-expense resource will
+                      create an empty expense with this expense id in the expenses collection.)
         - s3_image_uri: Expense image's S3 bucket URI.
         - uploaded_time: The time when the expense image was uploaded.
     

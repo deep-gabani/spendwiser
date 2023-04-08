@@ -1,7 +1,7 @@
 #!/bin/bash
 
-docker_name="start-processing-expense-image"
-function_name="start-processing-expense-image"
+docker_name="expense"
+function_name="expense"
 ecr_repo="spendwiser"
 
 # Create a fresh docker image

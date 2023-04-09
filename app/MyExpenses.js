@@ -45,7 +45,6 @@ const Expense = ({ expense }) => {
   const [showImageEnlarged, setShowImageEnlarged] = useState(false);
   const [imageSrcData, setImageSrcData] = useState('');
   const { setToast, setBuffering } = useContext(SharedContext);
-  setBuffering(false);
 
   const showExpenseInDetail = async () => {
     setBuffering(true);
@@ -255,8 +254,6 @@ const GroupExpenses = () => {
 
 
 const MyExpenses = () => {
-  const [isPersonalExpensesVisible, setIsPersonalExpensesVisible] = useState(true);
-  const [isGroupExpensesVisible, setIsGroupExpensesVisible] = useState(false);
   const [personalExpenses, setPersonalExpenses] = useState([]);
   const [groupExpenses, setGroupExpenses] = useState([]);
   const [currentPersonalExpensesPage, setCurrentPersonalExpensesPage] = useState(1);
@@ -272,15 +269,7 @@ const MyExpenses = () => {
     } else if ( response["statusCode"] === 500 ) {
       setToast({ text: response["body"]["message"], severity: 'FAILURE' });
     }
-    setBuffering(false);
   }
-
-  useEffect(() => {
-    if (userLoggedIn() && personalExpenses.length === 0) {
-      fetchPersonalExpenses();
-      setBuffering(true);
-    }
-  }, [isPersonalExpensesVisible]);
 
   let [fontsLoaded] = useFonts({
     Raleway_300Light,
@@ -302,6 +291,8 @@ const MyExpenses = () => {
           <Collapsible
             label="Personal Expenses"
             component={<PersonalExpenses personalExpenses={personalExpenses} />}
+            showByDefault={false}
+            onVisible={fetchPersonalExpenses}
           />
 
           <Collapsible

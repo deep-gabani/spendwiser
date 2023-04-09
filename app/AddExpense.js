@@ -430,7 +430,7 @@ const AddManually =  ({ manualExpense, setManualExpense }) => {
 
 
 const AddExpense = () => {
-  const [category, setCategory] = useState(categories[2]);
+  const [category, setCategory] = useState(categories[0]);
   const [image, setImage] = useState(null);
   const [scannedImage, setScannedImage] = useState(null);
   const [manualExpense, setManualExpense] = useState({

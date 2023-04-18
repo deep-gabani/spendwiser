@@ -1,0 +1,41 @@
+.textBoxView {
+    flex: 1;
+}
+
+.label {
+    font-weight: 300;
+    margin: 0;
+}
+
+.inputView {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+}
+
+.prependedTextInputLabel {
+    font-size: 24px;
+    padding: 24px 16px;
+    border: 1px solid #0F172A;
+    margin: 4px 0;
+    border-right-width: 0;
+    user-select: none;
+}
+
+.input {
+    flex: 1;
+    font-size: 24px;
+    padding: 16px;
+    border: 1px solid #0F172A;
+    justify-content: center;
+    align-items: center;
+    margin: 4px 0;
+    font-weight: 700;
+    min-width: 200px;
+    outline: none;
+}
+
+.input:focus {
+    background-color: #0F172A;
+    color: #fff;
+}

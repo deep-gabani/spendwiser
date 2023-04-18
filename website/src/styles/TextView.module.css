@@ -1,0 +1,10 @@
+.view {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+}
+
+.text {
+    margin: 0;
+    font-weight: 500;
+}

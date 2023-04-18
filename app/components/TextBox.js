@@ -3,9 +3,6 @@ import { Text, View, StyleSheet, TextInput, Dimensions} from 'react-native';
 import { useFonts, Raleway_300Light, Raleway_500Medium, Raleway_700Bold, Raleway_900Black } from '@expo-google-fonts/raleway';
 
 
-const windowWidth = Dimensions.get('window').width;
-
-
 const TextBox = ({ label = null, placeholder, onChange, value, textInputProps = {}, textInputStyle = {}, prependTextInputLabel = null }) => {
 
   let [fontsLoaded] = useFonts({

@@ -20,7 +20,7 @@ const TextView = ({ texts, viewStyle = {}, inline = true }) => {
     <View style={{ ...styles.view, ...viewStyle, flexDirection: inline ? 'row' : 'column' }}>
       {texts.map(text => {
         const label = text[0];
-        const style = text[1];
+        const style = text.length > 1 ? text[1] : {};
         return (
           <Text
             key={text}

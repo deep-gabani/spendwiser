@@ -32,8 +32,8 @@ const ExpenseItem = ({ item }) => {
 
   return (
     <View style={expensesStyles.expenseItemView}>
-      <TextView texts={[[name, {}], [`${quantity['value']} ${quantity['unit'].toLowerCase()}`, { fontFamily: 'Raleway_700Bold', fontSize: 12, opacity: 0.5 }]]} inline={false} viewStyle={{ paddingTop: 8, }} />
-      <TextView texts={[['₹', { fontSize: 12, }], [price, { paddingRight: 8, fontFamily: 'Raleway_700Bold' }], ['x', { paddingRight: 8, fontSize: 12, }], [occurrence, {}]]}  />
+      <TextView texts={[[name], [`${quantity['value']} ${quantity['unit'].toLowerCase()}`, { fontFamily: 'Raleway_700Bold', fontSize: 12, opacity: 0.5 }]]} inline={false} viewStyle={{ paddingTop: 8, }} />
+      <TextView texts={[['₹', { fontSize: 12, }], [price, { paddingRight: 8, fontFamily: 'Raleway_700Bold' }], ['x', { paddingRight: 8, fontSize: 12, }], [occurrence]]}  />
     </View>
   )
 }
@@ -64,7 +64,7 @@ const Expense = ({ expense }) => {
     return (
       <View style={{ ...expensesStyles.expense, opacity: 0.5 }}>
         <TextView
-          texts={[[parseDateTime(uploaded_time, 'D'), { fontFamily: 'Raleway_900Black' }], [parseDateTime(uploaded_time, 'MMMM', 3), {}], [parseDateTime(uploaded_time, 'HH:mm'), { opacity: 0.5, fontSize: 12, }]]}
+          texts={[[parseDateTime(uploaded_time, 'D'), { fontFamily: 'Raleway_900Black' }], [parseDateTime(uploaded_time, 'MMMM', 3)], [parseDateTime(uploaded_time, 'HH:mm'), { opacity: 0.5, fontSize: 12, }]]}
           viewStyle={{ alignItems: 'center', padding: 8, }}
           inline={false}
         />
@@ -86,7 +86,7 @@ const Expense = ({ expense }) => {
     <TouchableOpacity style={expensesStyles.expense} onPress={showExpenseInDetail}>
 
       <TextView
-        texts={[[parseDateTime(datetime, 'D'), { fontFamily: 'Raleway_900Black' }], [parseDateTime(datetime, 'MMMM', 3), {}], [parseDateTime(datetime, 'HH:mm'), { opacity: 0.5, fontSize: 12, }]]}
+        texts={[[parseDateTime(datetime, 'D'), { fontFamily: 'Raleway_900Black' }], [parseDateTime(datetime, 'MMMM', 3)], [parseDateTime(datetime, 'HH:mm'), { opacity: 0.5, fontSize: 12, }]]}
         viewStyle={{ alignItems: 'center', padding: 8, }}
         inline={false}
       />
@@ -94,7 +94,7 @@ const Expense = ({ expense }) => {
       <View style={expensesStyles.contentView}>
         <TextView texts={[['₹', { fontFamily: 'Raleway_700Bold' }], [bill_amount['paid'], { fontFamily: 'Raleway_900Black', fontSize: 24 }], ['/-', { fontFamily: 'Raleway_700Bold' }]]} />
         <TextView texts={[[capitalizeString(shop['name']), { fontFamily: 'Raleway_700Bold', marginTop: 8 }]]} />
-        <TextView texts={[...items.map(i => [`  •  ${i['name']}`, {}])]} inline={false} />
+        <TextView texts={[...items.map(i => [`  •  ${i['name']}`])]} inline={false} />
       </View>
       
       <Modal presentationStyle="overFullScreen" animationType='fade' visible={showExpenseModal} transparent={true} onRequestClose={() => setShowExpenseModal(false)}>

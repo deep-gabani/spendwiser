@@ -1,0 +1,27 @@
+body {
+  margin: 0;
+  padding: 16px;
+  color: #0F172A;
+  font-family: 'Raleway';
+}
+
+
+@media screen and (min-width: 768px) {
+  body {
+    padding: 16px 48px;
+  }
+}
+
+
+@media screen and (min-width: 1024px) {
+  body {
+    padding: 16px 64px;
+  }
+}
+
+
+@media screen and (min-width: 1444px) {
+  body {
+    padding: 16px 96px;
+  }
+}
